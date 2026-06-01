@@ -1,0 +1,20 @@
+{
+  "name": "@luminejs/website",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "dev": "vite --host 0.0.0.0",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint . --ext .ts,.tsx",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@luminejs/core": "workspace:^",
+    "@luminejs/widgets": "workspace:^"
+  },
+  "devDependencies": {
+    "@luminejs/vite-plugin": "workspace:^"
+  }
+}

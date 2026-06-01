@@ -1,0 +1,13 @@
+import { widget } from '../factory'
+export const Container = widget('div', { class: 'lumine-container' })
+export const Box = widget('div', { class: 'lumine-box' })
+export const Stack = widget('div', { class: 'lumine-stack' })
+export const Row = widget('div', { class: 'lumine-row' })
+export const Grid = widget('div', { class: 'lumine-grid' })
+export const Center = widget('div', { class: 'lumine-center' })
+export const Spacer = widget('div', { class: 'lumine-spacer', 'aria-hidden': true })
+export const Divider = widget('hr', { class: 'lumine-divider' })
+export const AspectRatio = widget('div', { class: 'lumine-aspect-ratio' })
+export const ScrollArea = widget('div', { class: 'lumine-scroll-area' })
+export const BentoGrid = widget('div', { class: 'lumine-bento-grid' })
+export const BentoCard = widget('article', { class: 'lumine-bento-card' })
