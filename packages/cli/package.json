@@ -26,11 +26,11 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@luminejs/cli": "link:",
-    "@luminejs/compiler": "workspace:^",
-    "@luminejs/server": "workspace:^"
+    "@luminejs/server": "workspace:^",
+    "@luminejs/compiler": "workspace:^"
   },
   "bin": {
-    "lumine": "./dist/index.js"
+    "lumine": "./dist/index.js",
+    "lemine": "./dist/index.js"
   }
 }
