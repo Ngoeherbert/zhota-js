@@ -115,6 +115,19 @@ function eslintSource(): string {
   return `${JSON.stringify(
     {
       extends: ['lumine/eslint-config'],
+      parser: '@typescript-eslint/parser',
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: 'module',
+        ecmaFeatures: { jsx: true },
+      },
+      settings: {
+        'import/resolver': {
+          node: {
+            extensions: ['.tsx', '.ts', '.jsx', '.js'],
+          },
+        },
+      },
       rules: {},
     },
     null,
@@ -282,6 +295,7 @@ function tsconfigSource(): string {
     "target": "ES2020",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
+    "checkJs": false,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
@@ -293,15 +307,18 @@ function tsconfigSource(): string {
     "jsx": "react-jsx",
     "jsxImportSource": "@luminejs/core",
     "incremental": true,
-    "plugins": [
-      { "name": "@luminejs/typescript-plugin" }
-    ],
     "paths": {
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "lumine-env.d.ts", "**/*.ts", "**/*.tsx", ".lumine/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "lumine-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx"
+  ],
+  "exclude": ["node_modules", ".lumine"]
 }
 `
 }

@@ -1,18 +1,10 @@
+import fs from 'node:fs'
+import path from 'node:path'
+
 import type { RouteManifestEntry } from './route-types'
 
-type Fs = {
-  readdirSync(path: string): string[]
-  statSync(path: string): { isDirectory(): boolean }
-}
-type Path = {
-  join(...parts: string[]): string
-  relative(from: string, to: string): string
-  sep: string
-}
-declare const require: (id: string) => unknown
-const load = (id: string): unknown => Function('id', 'return require(id)')(id)
-const fs = load('node:fs') as Fs
-const path = load('node:path') as Path
+const PAGE_EXTENSIONS = ['.tsx', '.ts', '.jsx', '.js'] as const
+const LOGIC_EXTENSIONS = ['.ts', '.js'] as const
 
 function segmentToPath(segment: string): string {
   if (segment.startsWith('[...') && segment.endsWith(']')) return '*'
@@ -20,58 +12,120 @@ function segmentToPath(segment: string): string {
   return segment
 }
 function routePath(parts: string[]): string {
-  return `/${parts.map(segmentToPath).filter(Boolean).join('/')}`.replace(/\/+$|^$/g, '') || '/'
+  return `/${parts.map(segmentToPath).filter(Boolean).join('/')}`.replace(/\/+$/g, '') || '/'
 }
 
-const pageFiles = new Set(['page.tsx', 'page.jsx', 'page.ts', 'page.js'])
-const routeFiles = new Set(['route.ts', 'route.js', 'route.tsx', 'route.jsx'])
-const layoutFiles = new Set(['layout.tsx', 'layout.jsx', 'layout.ts', 'layout.js'])
-const loadingFiles = new Set(['loading.tsx', 'loading.jsx', 'loading.ts', 'loading.js'])
-const errorFiles = new Set(['error.tsx', 'error.jsx', 'error.ts', 'error.js'])
-const notFoundFiles = new Set(['not-found.tsx', 'not-found.jsx', 'not-found.ts', 'not-found.js'])
+export function isPageFile(filename: string): boolean {
+  return PAGE_EXTENSIONS.some((extension) => filename === `page${extension}`)
+}
+
+export function isLayoutFile(filename: string): boolean {
+  return PAGE_EXTENSIONS.some((extension) => filename === `layout${extension}`)
+}
+
+export function isApiRouteFile(filename: string): boolean {
+  return LOGIC_EXTENSIONS.some((extension) => filename === `route${extension}`)
+}
+
+export function isLoadingFile(filename: string): boolean {
+  return PAGE_EXTENSIONS.some((extension) => filename === `loading${extension}`)
+}
+
+export function isErrorFile(filename: string): boolean {
+  return PAGE_EXTENSIONS.some((extension) => filename === `error${extension}`)
+}
+
+export function isNotFoundFile(filename: string): boolean {
+  return PAGE_EXTENSIONS.some((extension) => filename === `not-found${extension}`)
+}
+
+export function isMiddlewareFile(filename: string): boolean {
+  return LOGIC_EXTENSIONS.some((extension) => filename === `middleware${extension}`)
+}
+
+function firstExistingFile(
+  dir: string,
+  basename: string,
+  extensions: readonly string[],
+): string | undefined {
+  return extensions
+    .map((extension) => path.join(dir, `${basename}${extension}`))
+    .find((file) => fs.existsSync(file))
+}
+
+function collectDirectories(appDir: string): string[] {
+  const directories: string[] = []
+  const walk = (dir: string) => {
+    directories.push(dir)
+    for (const name of fs.readdirSync(dir)) {
+      const file = path.join(dir, name)
+      if (fs.statSync(file).isDirectory()) walk(file)
+    }
+  }
+  walk(appDir)
+  return directories
+}
 
 export function scanRoutes(appDir: string): RouteManifestEntry[] {
   const entries: RouteManifestEntry[] = []
   const layouts = new Map<string, string>()
   const special = new Map<string, Partial<RouteManifestEntry>>()
-  const walk = (dir: string) => {
-    for (const name of fs.readdirSync(dir)) {
-      const file = path.join(dir, name)
-      if (fs.statSync(file).isDirectory()) walk(file)
-      else {
-        const rel = path.relative(appDir, file).split(path.sep)
-        const folder = rel.slice(0, -1).join('/')
-        if (layoutFiles.has(name)) layouts.set(folder, file)
-        if (loadingFiles.has(name) || errorFiles.has(name) || notFoundFiles.has(name)) {
-          const current = special.get(folder) ?? {}
-          if (loadingFiles.has(name)) current.loading = file
-          if (errorFiles.has(name)) current.error = file
-          if (notFoundFiles.has(name)) current.notFound = file
-          special.set(folder, current)
-        }
-        if (pageFiles.has(name) || routeFiles.has(name)) {
-          const isApi = rel.includes('api') && routeFiles.has(name)
-          const parts = rel.slice(0, -1).filter((part: string) => !(isApi && part === 'api'))
-          const parentFolders = parts.map((_part: string, index: number) =>
-            parts.slice(0, index + 1).join('/'),
-          )
-          const layout =
-            [...parentFolders]
-              .reverse()
-              .map((key) => layouts.get(key))
-              .find(Boolean) ?? layouts.get('')
-          entries.push({
-            path: isApi ? `/api${routePath(parts)}`.replace('/api/', '/api/') : routePath(parts),
-            file,
-            component: file,
-            layout,
-            type: isApi ? 'api' : 'page',
-            ...(special.get(folder) ?? {}),
-          })
-        }
-      }
+  const directories = collectDirectories(appDir)
+
+  for (const dir of directories) {
+    const rel = path.relative(appDir, dir).split(path.sep).filter(Boolean)
+    const folder = rel.join('/')
+    const layout = firstExistingFile(dir, 'layout', PAGE_EXTENSIONS)
+    if (layout) layouts.set(folder, layout)
+
+    const current: Partial<RouteManifestEntry> = {}
+    const loading = firstExistingFile(dir, 'loading', PAGE_EXTENSIONS)
+    const error = firstExistingFile(dir, 'error', PAGE_EXTENSIONS)
+    const notFound = firstExistingFile(dir, 'not-found', PAGE_EXTENSIONS)
+    if (loading) current.loading = loading
+    if (error) current.error = error
+    if (notFound) current.notFound = notFound
+    if (Object.keys(current).length > 0) special.set(folder, current)
+  }
+
+  for (const dir of directories) {
+    const rel = path.relative(appDir, dir).split(path.sep).filter(Boolean)
+    const folder = rel.join('/')
+    const parentFolders = rel.map((_part: string, index: number) =>
+      rel.slice(0, index + 1).join('/'),
+    )
+    const layout =
+      [...parentFolders]
+        .reverse()
+        .map((key) => layouts.get(key))
+        .find(Boolean) ?? layouts.get('')
+
+    const page = firstExistingFile(dir, 'page', PAGE_EXTENSIONS)
+    if (page) {
+      entries.push({
+        path: routePath(rel),
+        file: page,
+        component: page,
+        layout,
+        type: 'page',
+        ...(special.get(folder) ?? {}),
+      })
+    }
+
+    const route = firstExistingFile(dir, 'route', LOGIC_EXTENSIONS)
+    if (route && rel[0] === 'api') {
+      const parts = rel.slice(1)
+      const apiPath = routePath(parts)
+      entries.push({
+        path: apiPath === '/' ? '/api' : `/api${apiPath}`,
+        file: route,
+        component: route,
+        layout,
+        type: 'api',
+        ...(special.get(folder) ?? {}),
+      })
     }
   }
-  walk(appDir)
+
   return entries.sort((a, b) => a.path.localeCompare(b.path))
 }
