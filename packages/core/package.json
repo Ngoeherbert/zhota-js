@@ -12,6 +12,7 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    
     "./package.json": "./package.json",
     "./jsx-runtime": {
       "types": "./dist/renderer/jsx-runtime.d.ts",
@@ -23,6 +24,8 @@
       "import": "./dist/renderer/jsx-runtime.js",
       "require": "./dist/renderer/jsx-runtime.cjs"
     }
+
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
