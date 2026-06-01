@@ -324,11 +324,17 @@ function sleep(ms: number): Promise<void> {
 
 async function waitForClient(url: string, timeoutMs = 30_000): Promise<boolean> {
   const deadline = Date.now() + timeoutMs
+  let consecutiveSuccessfulChecks = 0
   while (Date.now() < deadline) {
     try {
-      const response = await fetch(url, { method: 'GET' })
-      if (response.ok) return true
+      const response = await fetch(url, { method: 'GET', cache: 'no-store' })
+      consecutiveSuccessfulChecks = response.ok ? consecutiveSuccessfulChecks + 1 : 0
+      if (consecutiveSuccessfulChecks >= 3) {
+        await sleep(750)
+        return true
+      }
     } catch {
+      consecutiveSuccessfulChecks = 0
       // Vite is still starting; keep polling before opening the browser.
     }
     await sleep(250)
@@ -336,8 +342,12 @@ async function waitForClient(url: string, timeoutMs = 30_000): Promise<boolean> 
   return false
 }
 
+function shellQuote(value: string): string {
+  return `'${value.replace(/'/g, `'\''`)}'`
+}
+
 function openBrowser(childProcess: ChildProcess, url: string): void {
-  const command = process.platform === 'darwin' ? `open ${url}` : process.platform === 'win32' ? `start ${url}` : `xdg-open ${url}`
+  const command = process.platform === 'darwin' ? `open ${shellQuote(url)}` : process.platform === 'win32' ? `start "" "${url}"` : `xdg-open ${shellQuote(url)}`
   try {
     childProcess.exec(command, { stdio: 'ignore', detached: true })
   } catch {
@@ -380,8 +390,8 @@ export async function dev(argv: string[]): Promise<void> {
   }
   const viteArgs = ['exec', 'vite', '--host', '0.0.0.0', '--port', String(options.clientPort)]
   const vite = childProcess.spawn('pnpm', viteArgs, { cwd: projectDir, stdio: 'inherit', shell: process.platform === 'win32' })
-  const url = `http://localhost:${options.clientPort}`
-  console.log(`✓ Lemine server ready on http://localhost:${options.serverPort}`)
+  const url = `http://127.0.0.1:${options.clientPort}`
+  console.log(`✓ Lemine server ready on http://127.0.0.1:${options.serverPort}`)
   console.log(`• Waiting for Lemine client on ${url} before opening the browser...`)
   const clientReady = await waitForClient(url)
   if (clientReady) {
