@@ -1,6 +1,6 @@
-# LumineJS
+# LemineJS
 
-LumineJS is a full-stack JSX framework with built-in widgets, file-system routing, SSR/SSG/ISR/CSR rendering strategies, API routes, server actions, and automatic optimizations.
+LemineJS is a full-stack JSX framework with built-in widgets, file-system routing, SSR/SSG/ISR/CSR rendering strategies, API routes, server actions, and automatic optimizations.
 
 ## Monorepo layout
 
@@ -12,7 +12,7 @@ packages/
   server/       SSR, SSG, ISR, CSR, API routes, and server actions
   compiler/     Build-time compiler and optimizer
   image/        Image and font optimization
-  cli/          lumine command-line interface
+  cli/          lemine command-line interface
   vite-plugin/  Vite integration
 apps/
   website/      Official documentation and marketing site

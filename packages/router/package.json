@@ -1,7 +1,7 @@
 {
-  "name": "@luminejs/router",
+  "name": "@leminejs/router",
   "version": "0.0.0",
-  "description": "LumineJS router package.",
+  "description": "LemineJS router package.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -26,6 +26,6 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@luminejs/core": "workspace:^"
+    "@leminejs/core": "workspace:^"
   }
 }

@@ -71,13 +71,13 @@ async function nodeApis(): Promise<{ fs: NodeFs; path: NodePath; childProcess: C
 }
 
 export function help(): string {
-  return `lumine <${commands.join('|')}>
+  return `lemine <${commands.join('|')}>
 
 Examples:
-  lumine create my-app
-  lumine create my-app --template blog --no-install
-  lumine dev
-  lumine dev --port 3000 --server-port 3001 --no-open`
+  lemine create my-app
+  lemine create my-app --template blog --no-install
+  lemine dev
+  lemine dev --port 3000 --server-port 3001 --no-open`
 }
 
 function positionalArgs(args: string[]): string[] {
@@ -129,7 +129,7 @@ function parseDevOptions(args: string[]): DevOptions {
 function appSource(name: string, template: CreateOptions['template'], language: CreateOptions['language']): string {
   const title = name.replace(/[-_]/g, ' ')
   const sections: Record<CreateOptions['template'], string> = {
-    blank: 'Edit src/main.ts and app/api/hello/route.ts to start building with LumineJS.',
+    blank: 'Edit src/main.ts and app/api/hello/route.ts to start building with LemineJS.',
     blog: 'Blog template: static posts, markdown-ready content, ISR-friendly routes, and API routes.',
     dashboard: 'Dashboard template: client-rendered private UI with optimistic interactions and a local API.',
     saas: 'SaaS template: API routes, server actions, pricing, auth surfaces, and dashboard shell.',
@@ -144,7 +144,7 @@ async function loadServerMessage()${typeAnnotation} {
     const data = await response.json()
     return data.message
   } catch {
-    return 'The Lumine server is still starting. Refresh in a moment.'
+    return 'The Lemine server is still starting. Refresh in a moment.'
   }
 }
 
@@ -153,7 +153,7 @@ async function render() {
   if (app) {
     app.innerHTML = \`
       <main class="shell">
-        <p class="eyebrow">LumineJS ${template} template</p>
+        <p class="eyebrow">LemineJS ${template} template</p>
         <h1>${title}</h1>
         <p>${sections[template]}</p>
         <section class="server-card">
@@ -186,8 +186,8 @@ function apiRouteSource(language: CreateOptions['language']): string {
   const type = language === 'ts' ? ': Promise<Response>' : ''
   return `export async function GET()${type} {
   return Response.json({
-    message: 'Hello from the Lumine server. Edit app/api/hello/route.${language} to change this response.',
-    framework: 'LumineJS',
+    message: 'Hello from the Lemine server. Edit app/api/hello/route.${language} to change this response.',
+    framework: 'LemineJS',
   })
 }
 `
@@ -239,7 +239,7 @@ function writeProjectFiles(fs: NodeFs, path: NodePath, projectDir: string, name:
           moduleResolution: 'Bundler',
           strict: true,
           jsx: 'preserve',
-          jsxImportSource: '@luminejs/core',
+          jsxImportSource: '@leminejs/core',
           skipLibCheck: true,
         },
         include: ['src', 'app'],
@@ -323,7 +323,7 @@ function openBrowser(childProcess: ChildProcess, url: string): void {
 
 export async function create(argv: string[]): Promise<void> {
   const target = positionalArgs(argv)[0]
-  if (!target) throw new Error('Missing project name. Usage: lumine create my-app')
+  if (!target) throw new Error('Missing project name. Usage: lemine create my-app')
   const options = parseCreateOptions(argv)
   const { fs, path, childProcess } = await nodeApis()
   const projectDir = path.resolve(process.cwd(), target)
@@ -349,16 +349,16 @@ export async function dev(argv: string[]): Promise<void> {
   const projectDir = process.cwd()
   const server = await startApiServer(fs, path, http, projectDir, options.serverPort)
   if (argv.includes('--server-only')) {
-    console.log(`✓ Lumine server ready on http://localhost:${options.serverPort}`)
+    console.log(`✓ Lemine server ready on http://localhost:${options.serverPort}`)
     await new Promise<void>(() => undefined)
     return
   }
   const viteArgs = ['exec', 'vite', '--host', '0.0.0.0', '--port', String(options.clientPort)]
   const vite = childProcess.spawn('pnpm', viteArgs, { cwd: projectDir, stdio: 'inherit', shell: process.platform === 'win32' })
   const url = `http://localhost:${options.clientPort}`
-  console.log(`✓ Lumine server ready on http://localhost:${options.serverPort}`)
-  console.log(`✓ Lumine client ready on ${url}`)
-  console.log(`✓ API routes are available on ${url}/api/* and proxied to the Lumine server`)
+  console.log(`✓ Lemine server ready on http://localhost:${options.serverPort}`)
+  console.log(`✓ Lemine client ready on ${url}`)
+  console.log(`✓ API routes are available on ${url}/api/* and proxied to the Lemine server`)
   if (options.open) openBrowser(childProcess, url)
   const shutdown = () => {
     vite.kill('SIGTERM')
@@ -380,7 +380,7 @@ export async function run(argv = process.argv.slice(2)): Promise<void> {
   if (!commands.includes(command as Command)) throw new Error(`Unknown command: ${command}\n${help()}`)
   if (command === 'create') return create(rest)
   if (command === 'dev') return dev(rest)
-  else console.log(`lumine ${command} is ready`)
+  else console.log(`lemine ${command} is ready`)
 }
 
 void run().catch((error: Error) => {

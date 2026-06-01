@@ -1,7 +1,7 @@
 import { createReactiveAttr, createReactiveTextNode } from './dom-helpers'
-import { Fragment, type LumineElement } from './jsx-runtime'
+import { Fragment, type LemineElement } from './jsx-runtime'
 
-function isElement(value: unknown): value is LumineElement { return !!value && typeof value === 'object' && 'type' in value }
+function isElement(value: unknown): value is LemineElement { return !!value && typeof value === 'object' && 'type' in value }
 
 export function toNode(value: unknown): Node {
   if (value == null || value === false || value === true) return document.createTextNode('')

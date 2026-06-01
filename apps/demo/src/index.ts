@@ -17,12 +17,12 @@ type Route = {
 
 const posts: Post[] = [
   {
-    slug: 'introducing-luminejs',
-    title: 'Introducing LumineJS',
+    slug: 'introducing-leminejs',
+    title: 'Introducing LemineJS',
     excerpt: 'A full-stack JSX framework with fine-grained reactivity and built-in widgets.',
     content:
-      'LumineJS combines a tiny reactive runtime, file-system routing, rendering modes, API routes, server actions, and a widget library into one developer experience.',
-    author: 'Lumine Core Team',
+      'LemineJS combines a tiny reactive runtime, file-system routing, rendering modes, API routes, server actions, and a widget library into one developer experience.',
+    author: 'Lemine Core Team',
     tags: ['announcement', 'framework'],
     updatedAt: '2026-06-01',
   },
@@ -48,7 +48,7 @@ function home(): string {
   return `
     <section class="hero">
       <p class="eyebrow">One framework. Everything included.</p>
-      <h1>DevBlog proves LumineJS end-to-end.</h1>
+      <h1>DevBlog proves LemineJS end-to-end.</h1>
       <p>
         This runnable demo includes public SSG content, ISR-style blog routes, CSR dashboard interactions,
         an SSR admin view, API-route shaped data, server-action shaped mutations, dark mode, search, and SEO metadata.
@@ -113,7 +113,7 @@ function dashboard(): string {
       <p>Create a local optimistic post. This mirrors the server action workflow without requiring a separate server.</p>
     </section>
     <form class="card form" id="new-post-form">
-      <label>Title <input name="title" required value="Draft LumineJS Post" /></label>
+      <label>Title <input name="title" required value="Draft LemineJS Post" /></label>
       <label>Excerpt <textarea name="excerpt" required>Optimistic UI updates before the server confirms.</textarea></label>
       <button class="button" type="submit">Create optimistic post</button>
     </form>
@@ -168,14 +168,14 @@ function layout(content: string, activePath: string): string {
   return `
     <style>${styles}</style>
     <header class="shell-header">
-      <a class="brand" href="/" data-link>LumineJS <span>DevBlog</span></a>
+      <a class="brand" href="/" data-link>LemineJS <span>DevBlog</span></a>
       <nav>
         ${routes.map((route) => `<a href="${route.path}" data-link class="${activePath === route.path ? 'active' : ''}">${route.label}<small>${route.strategy}</small></a>`).join('')}
       </nav>
       <button id="theme-toggle" class="theme-toggle" type="button">Toggle theme</button>
     </header>
     <main>${content}</main>
-    <footer>Built with the local LumineJS monorepo packages · no Express, React, or external UI library required.</footer>
+    <footer>Built with the local LemineJS monorepo packages · no Express, React, or external UI library required.</footer>
   `
 }
 
@@ -184,7 +184,7 @@ function render(pathname = location.pathname): void {
   const match = matchRoute(pathname)
   const content = match.route ? match.route.render() : notFound()
   root.innerHTML = layout(content, pathname)
-  document.title = match.route ? `${match.route.label} · LumineJS DevBlog` : 'Not Found · LumineJS DevBlog'
+  document.title = match.route ? `${match.route.label} · LemineJS DevBlog` : 'Not Found · LemineJS DevBlog'
   wireInteractions()
 }
 
@@ -201,7 +201,7 @@ function wireInteractions(): void {
 
   document.querySelector<HTMLButtonElement>('#theme-toggle')?.addEventListener('click', () => {
     document.documentElement.classList.toggle('dark')
-    localStorage.setItem('lumine-demo-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light')
+    localStorage.setItem('lemine-demo-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light')
   })
 
   document.querySelector<HTMLInputElement>('#post-search')?.addEventListener('input', (event) => {
@@ -238,6 +238,6 @@ const styles = `
   .post-list { display: grid; gap: 16px; } .article { background: var(--panel); border: 1px solid var(--border); border-radius: 32px; padding: 48px; } .byline { color: var(--muted); } .search, .form label { display: grid; gap: 8px; color: var(--muted); } input, textarea { width: 100%; border: 1px solid var(--border); border-radius: 16px; padding: 12px; background: var(--bg); color: var(--text); } .form { display: grid; gap: 16px; margin-bottom: 24px; }
 `
 
-if (localStorage.getItem('lumine-demo-theme') === 'dark') document.documentElement.classList.add('dark')
+if (localStorage.getItem('lemine-demo-theme') === 'dark') document.documentElement.classList.add('dark')
 addEventListener('popstate', () => render())
 render()

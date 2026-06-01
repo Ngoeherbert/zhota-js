@@ -12,7 +12,7 @@
   },
   "plugins": ["@typescript-eslint"],
   "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "prettier"],
-  "ignorePatterns": ["dist", ".lumine", "coverage", "node_modules"],
+  "ignorePatterns": ["dist", ".lemine", "coverage", "node_modules"],
   "rules": {
     "@typescript-eslint/consistent-type-imports": "error"
   }

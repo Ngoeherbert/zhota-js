@@ -7,7 +7,7 @@ export interface Context<T> {
 const values = new Map<symbol, unknown[]>()
 
 export function createContext<T>(defaultValue: T): Context<T> {
-  const id = Symbol('LumineContext')
+  const id = Symbol('LemineContext')
   return {
     id,
     defaultValue,

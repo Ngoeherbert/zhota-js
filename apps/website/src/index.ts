@@ -7,7 +7,7 @@ type DocSection = {
 const sections: DocSection[] = [
   {
     title: 'Getting Started',
-    summary: 'Install LumineJS, create a project, and learn the app directory structure.',
+    summary: 'Install LemineJS, create a project, and learn the app directory structure.',
     links: ['Introduction', 'Installation', 'Quick Start', 'Project Structure'],
   },
   {
@@ -38,7 +38,7 @@ function render(): void {
   root.innerHTML = `
     <style>${styles}</style>
     <header>
-      <a class="logo" href="#top">LumineJS</a>
+      <a class="logo" href="#top">LemineJS</a>
       <nav>
         <a href="#docs">Docs</a>
         <a href="#api">API</a>
@@ -51,10 +51,10 @@ function render(): void {
         <p class="eyebrow">React UI + Next-style full-stack + Flutter-inspired widgets</p>
         <h1>One JSX framework. Everything included.</h1>
         <p>
-          LumineJS provides fine-grained reactivity, file-system routing, SSR/SSG/ISR/CSR,
+          LemineJS provides fine-grained reactivity, file-system routing, SSR/SSG/ISR/CSR,
           API routes, server actions, built-in widgets, and automatic optimizations in one monorepo.
         </p>
-        <pre><code>pnpm create lumine my-app\ncd my-app\npnpm dev</code></pre>
+        <pre><code>pnpm create lemine my-app\ncd my-app\npnpm dev</code></pre>
       </section>
       <section class="features">
         ${feature('Fine-grained runtime', 'Signals update exactly the text, attributes, and effects that read them.')}
@@ -66,7 +66,7 @@ function render(): void {
         <div>
           <p class="eyebrow">Documentation</p>
           <h2>Complete docs map</h2>
-          <p>These sections mirror the planned LumineJS docs IA and are ready to be expanded into file-system routes.</p>
+          <p>These sections mirror the planned LemineJS docs IA and are ready to be expanded into file-system routes.</p>
         </div>
         <div class="doc-grid">
           ${sections.map((section) => `

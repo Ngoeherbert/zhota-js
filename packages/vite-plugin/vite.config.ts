@@ -11,7 +11,7 @@ export default defineConfig({
       fileName: (format) => (format === 'es' ? 'index.js' : 'index.cjs')
     },
     rollupOptions: {
-      external: [/^@luminejs\//]
+      external: [/^@leminejs\//]
     },
     sourcemap: true,
     emptyOutDir: false

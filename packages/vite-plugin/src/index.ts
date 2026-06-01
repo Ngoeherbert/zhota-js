@@ -1,4 +1,4 @@
-export type LumineVitePluginOptions = {
+export type LemineVitePluginOptions = {
   appDir?: string
   injectGlobalStyles?: boolean
   devOverlay?: boolean
@@ -15,19 +15,19 @@ type VitePlugin = {
 const serverActionPattern = /(['"]use server['"])/
 const clientDirectivePattern = /(['"]use client['"])/
 
-export function lumine(options: LumineVitePluginOptions = {}): VitePlugin {
+export function lemine(options: LemineVitePluginOptions = {}): VitePlugin {
   const appDir = options.appDir ?? 'app'
   return {
-    name: 'lumine:vite-plugin',
+    name: 'lemine:vite-plugin',
     enforce: 'pre',
     config() {
       return {
         esbuild: {
           jsx: 'automatic',
-          jsxImportSource: '@luminejs/core',
+          jsxImportSource: '@leminejs/core',
         },
         optimizeDeps: {
-          include: ['@luminejs/core', '@luminejs/widgets', '@luminejs/router'],
+          include: ['@leminejs/core', '@leminejs/widgets', '@leminejs/router'],
         },
       }
     },
@@ -37,7 +37,7 @@ export function lumine(options: LumineVitePluginOptions = {}): VitePlugin {
       if (serverActionPattern.test(code)) {
         transformed = transformed.replace(
           /export\s+async\s+function\s+(\w+)\s*\([^)]*\)\s*{[\s\S]*?\n}/g,
-          "export async function $1(...args) { return fetch('/__lumine/actions/$1', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(args) }).then((response) => response.json()) }",
+          "export async function $1(...args) { return fetch('/__lemine/actions/$1', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(args) }).then((response) => response.json()) }",
         )
       }
       if (clientDirectivePattern.test(code)) {
@@ -51,4 +51,4 @@ export function lumine(options: LumineVitePluginOptions = {}): VitePlugin {
   }
 }
 
-export default lumine
+export default lemine

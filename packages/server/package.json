@@ -1,7 +1,7 @@
 {
-  "name": "@luminejs/server",
+  "name": "@leminejs/server",
   "version": "0.0.0",
-  "description": "LumineJS server package.",
+  "description": "LemineJS server package.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -26,8 +26,8 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@luminejs/core": "workspace:^",
-    "@luminejs/router": "workspace:^",
-    "@luminejs/compiler": "workspace:^"
+    "@leminejs/core": "workspace:^",
+    "@leminejs/router": "workspace:^",
+    "@leminejs/compiler": "workspace:^"
   }
 }

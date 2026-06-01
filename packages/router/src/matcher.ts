@@ -16,7 +16,7 @@ function matchPattern(pattern: string, path: string): Record<string, string> | u
 }
 
 export function matchRoute(input: string, manifest: RouteManifestEntry[]): RouteMatch {
-  const url = new URL(input, 'http://lumine.local')
+  const url = new URL(input, 'http://lemine.local')
   for (const route of manifest) {
     const params = matchPattern(route.path, url.pathname)
     if (params) return { route, params, query: Object.fromEntries(url.searchParams) }

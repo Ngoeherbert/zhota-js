@@ -6,7 +6,7 @@ const load = (id: string): unknown => Function('id', 'return require(id)')(id)
 const fs = load('node:fs') as Fs
 const path = load('node:path') as Path
 
-export async function buildStaticPage(routePath: string, component: unknown, outDir = '.lumine/static'): Promise<string> {
+export async function buildStaticPage(routePath: string, component: unknown, outDir = '.lemine/static'): Promise<string> {
   const file = path.join(outDir, routePath === '/' ? 'index.html' : `${routePath.replace(/^\//, '')}.html`)
   fs.mkdirSync(path.dirname(file), { recursive: true })
   const html = await renderPage(component)

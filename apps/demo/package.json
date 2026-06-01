@@ -1,5 +1,5 @@
 {
-  "name": "@luminejs/demo",
+  "name": "@leminejs/demo",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -11,10 +11,10 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@luminejs/core": "workspace:^",
-    "@luminejs/widgets": "workspace:^"
+    "@leminejs/core": "workspace:^",
+    "@leminejs/widgets": "workspace:^"
   },
   "devDependencies": {
-    "@luminejs/vite-plugin": "workspace:^"
+    "@leminejs/vite-plugin": "workspace:^"
   }
 }

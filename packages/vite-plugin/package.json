@@ -26,6 +26,6 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@luminejs/compiler": "workspace:^"
+    "@leminejs/compiler": "workspace:^"
   }
 }

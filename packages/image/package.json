@@ -1,7 +1,7 @@
 {
-  "name": "@luminejs/image",
+  "name": "@leminejs/image",
   "version": "0.0.0",
-  "description": "LumineJS image package.",
+  "description": "LemineJS image package.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

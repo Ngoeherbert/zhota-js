@@ -2,7 +2,7 @@ node_modules/
 dist/
 coverage/
 .turbo/
-.lumine/
+.lemine/
 *.tsbuildinfo
 .env
 .env.*

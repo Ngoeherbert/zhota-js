@@ -1,8 +1,8 @@
 {
-  "name": "luminejs",
+  "name": "leminejs",
   "version": "0.0.0",
   "private": true,
-  "description": "LumineJS monorepo: full-stack JSX framework with built-in widgets, routing, rendering, compiler, CLI, and Vite integration.",
+  "description": "LemineJS monorepo: full-stack JSX framework with built-in widgets, routing, rendering, compiler, CLI, and Vite integration.",
   "packageManager": "pnpm@9.15.0",
   "type": "module",
   "scripts": {
