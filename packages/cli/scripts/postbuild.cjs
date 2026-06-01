@@ -1,5 +1,5 @@
-import { chmodSync, existsSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+const { chmodSync, existsSync, writeFileSync } = require('node:fs')
+const { join } = require('node:path')
 
 const distDir = join(__dirname, '..', 'dist')
 const esmEntry = join(distDir, 'index.js')
