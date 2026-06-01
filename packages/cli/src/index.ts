@@ -212,6 +212,9 @@ function packageJson(name: string): string {
         typescript: '^5.7.2',
         vite: '^6.0.5',
       },
+      pnpm: {
+        onlyBuiltDependencies: ['esbuild'],
+      },
     },
     null,
     2,
@@ -254,13 +257,15 @@ function writeProjectFiles(fs: NodeFs, path: NodePath, projectDir: string, name:
   )
 }
 
-function installDependencies(childProcess: ChildProcess, projectDir: string): void {
+function installDependencies(childProcess: ChildProcess, projectDir: string): boolean {
   try {
     childProcess.execSync('pnpm install', { cwd: projectDir, stdio: 'inherit' })
-  } catch (error) {
-    console.error('\nDependency installation failed. The project files were created successfully.')
-    console.error('Run `pnpm install` inside the project after fixing the package manager or registry issue.')
-    throw error
+    return true
+  } catch {
+    console.log('\nDependency installation did not complete, but the project files were created successfully.')
+    console.log('The generated package.json allows esbuild build scripts via pnpm.onlyBuiltDependencies.')
+    console.log('Run `pnpm install` again inside the project after resolving the package-manager message above.')
+    return false
   }
 }
 
@@ -331,15 +336,16 @@ export async function create(argv: string[]): Promise<void> {
   if (fs.existsSync(projectDir)) throw new Error(`Directory already exists: ${projectDir}`)
   console.log(`Creating project: ${name}`)
   writeProjectFiles(fs, path, projectDir, name, options)
+  let installed = false
   if (options.install) {
     console.log('Installing dependencies...')
-    installDependencies(childProcess, projectDir)
+    installed = installDependencies(childProcess, projectDir)
   } else {
     console.log('Skipping dependency installation because --no-install was provided.')
   }
   console.log(`\nCreated ${name}. Next steps:`)
   console.log(`  cd ${name}`)
-  if (!options.install) console.log('  pnpm install')
+  if (!options.install || !installed) console.log('  pnpm install')
   console.log('  lemine dev')
 }
 
