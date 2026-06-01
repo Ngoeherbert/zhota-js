@@ -317,6 +317,25 @@ async function startApiServer(fs: NodeFs, path: NodePath, http: Http, projectDir
   return server
 }
 
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function waitForClient(url: string, timeoutMs = 30_000): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(url, { method: 'GET' })
+      if (response.ok) return true
+    } catch {
+      // Vite is still starting; keep polling before opening the browser.
+    }
+    await sleep(250)
+  }
+  return false
+}
+
 function openBrowser(childProcess: ChildProcess, url: string): void {
   const command = process.platform === 'darwin' ? `open ${url}` : process.platform === 'win32' ? `start ${url}` : `xdg-open ${url}`
   try {
@@ -363,9 +382,15 @@ export async function dev(argv: string[]): Promise<void> {
   const vite = childProcess.spawn('pnpm', viteArgs, { cwd: projectDir, stdio: 'inherit', shell: process.platform === 'win32' })
   const url = `http://localhost:${options.clientPort}`
   console.log(`✓ Lemine server ready on http://localhost:${options.serverPort}`)
-  console.log(`✓ Lemine client ready on ${url}`)
-  console.log(`✓ API routes are available on ${url}/api/* and proxied to the Lemine server`)
-  if (options.open) openBrowser(childProcess, url)
+  console.log(`• Waiting for Lemine client on ${url} before opening the browser...`)
+  const clientReady = await waitForClient(url)
+  if (clientReady) {
+    console.log(`✓ Lemine client ready on ${url}`)
+    console.log(`✓ API routes are available on ${url}/api/* and proxied to the Lemine server`)
+    if (options.open) openBrowser(childProcess, url)
+  } else {
+    console.log(`⚠ Lemine client did not respond on ${url} within 30 seconds. Keeping dev processes running; open the URL manually when Vite finishes starting.`)
+  }
   const shutdown = () => {
     vite.kill('SIGTERM')
     server.close()
