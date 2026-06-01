@@ -8,7 +8,12 @@ declare const process: {
   on(event: string, listener: () => void): void
 }
 declare const console: { log: (...args: unknown[]) => void; error: (...args: unknown[]) => void }
-declare const URL: { new (input: string, base?: string): { pathname: string; searchParams: { get(name: string): string | null } } }
+declare const URL: {
+  new (
+    input: string,
+    base?: string,
+  ): { pathname: string; searchParams: { get(name: string): string | null } }
+}
 
 type NodeFs = {
   existsSync(path: string): boolean
@@ -23,12 +28,19 @@ type NodePath = {
   basename(path: string): string
 }
 
-type ChildProcessHandle = { kill(signal?: string): void; on(event: string, listener: (code?: number) => void): void }
+type ChildProcessHandle = {
+  kill(signal?: string): void
+  on(event: string, listener: (code?: number) => void): void
+}
 
 type ChildProcess = {
   exec(command: string, options?: { stdio?: 'ignore'; detached?: boolean }): ChildProcessHandle
   execSync(command: string, options?: { cwd?: string; stdio?: 'inherit' | 'pipe' | 'ignore' }): void
-  spawn(command: string, args?: string[], options?: { cwd?: string; stdio?: 'inherit' | 'pipe' | 'ignore'; shell?: boolean }): ChildProcessHandle
+  spawn(
+    command: string,
+    args?: string[],
+    options?: { cwd?: string; stdio?: 'inherit' | 'pipe' | 'ignore'; shell?: boolean },
+  ): ChildProcessHandle
 }
 
 type HttpRequest = { url?: string; method?: string }
@@ -41,11 +53,19 @@ type HttpServer = {
   listen(port: number, hostname: string, callback: () => void): void
   close(callback?: () => void): void
 }
-type Http = { createServer(handler: (request: HttpRequest, response: HttpResponse) => void | Promise<void>): HttpServer }
+type Http = {
+  createServer(
+    handler: (request: HttpRequest, response: HttpResponse) => void | Promise<void>,
+  ): HttpServer
+}
+
+type SourceLanguage = 'ts' | 'js' | 'tsx' | 'jsx'
+type RouteLanguage = 'ts' | 'js'
+type JsxLanguage = 'tsx' | 'jsx'
 
 type CreateOptions = {
   template: 'blank' | 'blog' | 'dashboard' | 'saas'
-  language: 'ts' | 'js'
+  language: SourceLanguage
   install: boolean
 }
 
@@ -55,19 +75,39 @@ type DevOptions = {
   open: boolean
 }
 
-const commands = ['create', 'dev', 'build', 'start', 'preview', 'add', 'generate', 'analyze'] as const
+const commands = [
+  'create',
+  'dev',
+  'build',
+  'start',
+  'preview',
+  'add',
+  'generate',
+  'analyze',
+] as const
 export type Command = (typeof commands)[number]
 
-const load = (id: string): Promise<unknown> => Function('id', 'return import(id)')(id) as Promise<unknown>
+const load = (id: string): Promise<unknown> =>
+  Function('id', 'return import(id)')(id) as Promise<unknown>
 
-async function nodeApis(): Promise<{ fs: NodeFs; path: NodePath; childProcess: ChildProcess; http: Http }> {
+async function nodeApis(): Promise<{
+  fs: NodeFs
+  path: NodePath
+  childProcess: ChildProcess
+  http: Http
+}> {
   const [fs, path, childProcess, http] = await Promise.all([
     load('node:fs'),
     load('node:path'),
     load('node:child_process'),
     load('node:http'),
   ])
-  return { fs: fs as NodeFs, path: path as NodePath, childProcess: childProcess as ChildProcess, http: http as Http }
+  return {
+    fs: fs as NodeFs,
+    path: path as NodePath,
+    childProcess: childProcess as ChildProcess,
+    http: http as Http,
+  }
 }
 
 export function help(): string {
@@ -75,7 +115,7 @@ export function help(): string {
 
 Examples:
   lemine create my-app
-  lemine create my-app --template blog --no-install
+  lemine create my-app --template blog --language tsx --no-install
   lemine dev
   lemine dev --port 3000 --server-port 3001 --no-open`
 }
@@ -84,7 +124,11 @@ function positionalArgs(args: string[]): string[] {
   const values: string[] = []
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]
-    if (['--template', '-t', '--language', '--lang', '--port', '-p', '--server-port'].includes(arg ?? '')) {
+    if (
+      ['--template', '-t', '--language', '--lang', '--port', '-p', '--server-port'].includes(
+        arg ?? '',
+      )
+    ) {
       index += 1
       continue
     }
@@ -96,7 +140,8 @@ function positionalArgs(args: string[]): string[] {
 function numberOption(args: string[], names: string[], fallback: number): number {
   const index = args.findIndex((arg) => names.includes(arg))
   const value = index >= 0 ? Number(args[index + 1]) : fallback
-  if (!Number.isFinite(value) || value <= 0) throw new Error(`Invalid numeric option for ${names.join('/')}`)
+  if (!Number.isFinite(value) || value <= 0)
+    throw new Error(`Invalid numeric option for ${names.join('/')}`)
   return value
 }
 
@@ -108,8 +153,8 @@ function parseCreateOptions(args: string[]): CreateOptions {
   if (!['blank', 'blog', 'dashboard', 'saas'].includes(template ?? '')) {
     throw new Error(`Unknown template "${template}". Expected blank, blog, dashboard, or saas.`)
   }
-  if (!['ts', 'js'].includes(language ?? '')) {
-    throw new Error(`Unknown language "${language}". Expected ts or js.`)
+  if (!['ts', 'js', 'tsx', 'jsx'].includes(language ?? '')) {
+    throw new Error(`Unknown language "${language}". Expected ts, js, tsx, or jsx.`)
   }
   return {
     template: template as CreateOptions['template'],
@@ -126,63 +171,177 @@ function parseDevOptions(args: string[]): DevOptions {
   }
 }
 
-function appSource(name: string, template: CreateOptions['template'], language: CreateOptions['language']): string {
+function isTypeScriptLanguage(language: SourceLanguage): boolean {
+  return language === 'ts' || language === 'tsx'
+}
+
+function routeLanguage(language: SourceLanguage): RouteLanguage {
+  return isTypeScriptLanguage(language) ? 'ts' : 'js'
+}
+
+function jsxLanguage(language: SourceLanguage): JsxLanguage {
+  return isTypeScriptLanguage(language) ? 'tsx' : 'jsx'
+}
+
+function mainSource(language: SourceLanguage): string {
+  const appSelector = isTypeScriptLanguage(language)
+    ? "document.querySelector<HTMLDivElement>('#app')"
+    : "document.querySelector('#app')"
+  if (language === 'tsx' || language === 'jsx') {
+    return `import { render } from '@leminejs/core'
+import { App } from './App'
+import './styles.css'
+
+const app = ${appSelector}
+
+if (app) {
+  render(<App />, app)
+}
+`
+  }
+  return `import { render } from '@leminejs/core'
+import { App } from './App'
+import './styles.css'
+
+const app = ${appSelector}
+
+if (app) {
+  render(App, app)
+}
+`
+}
+
+function appSource(
+  name: string,
+  template: CreateOptions['template'],
+  language: SourceLanguage,
+): string {
   const title = name.replace(/[-_]/g, ' ')
   const sections: Record<CreateOptions['template'], string> = {
-    blank: 'Edit src/main.ts and app/api/hello/route.ts to start building with LemineJS.',
+    blank:
+      'Edit app/App.' +
+      jsxLanguage(language) +
+      ' and app/api/hello/route.' +
+      routeLanguage(language) +
+      ' to start building with LemineJS.',
     blog: 'Blog template: static posts, markdown-ready content, ISR-friendly routes, and API routes.',
-    dashboard: 'Dashboard template: client-rendered private UI with optimistic interactions and a local API.',
+    dashboard:
+      'Dashboard template: client-rendered private UI with optimistic interactions and a local API.',
     saas: 'SaaS template: API routes, server actions, pricing, auth surfaces, and dashboard shell.',
   }
-  const selector = language === 'ts' ? "document.querySelector<HTMLDivElement>('#app')" : "document.querySelector('#app')"
-  const typeAnnotation = language === 'ts' ? ': Promise<string>' : ''
-  return `const app = ${selector}
+  const typeDefinitions = isTypeScriptLanguage(language)
+    ? `type ServerMessage = {
+  message?: string
+}
 
-async function loadServerMessage()${typeAnnotation} {
+`
+    : ''
+  const dataType = isTypeScriptLanguage(language) ? ': ServerMessage' : ''
+  const returnType = isTypeScriptLanguage(language) ? ': Promise<string>' : ''
+  return `import { useMount, useSignal } from '@leminejs/core'
+
+${typeDefinitions}async function loadServerMessage()${returnType} {
   try {
     const response = await fetch('/api/hello')
-    const data = await response.json()
-    return data.message
+    const data${dataType} = await response.json()
+    return data.message ?? 'Hello from LemineJS.'
   } catch {
     return 'The Lemine server is still starting. Refresh in a moment.'
   }
 }
 
-async function render() {
-  const serverMessage = await loadServerMessage()
-  if (app) {
-    app.innerHTML = \`
-      <main class="shell">
-        <p class="eyebrow">LemineJS ${template} template</p>
-        <h1>${title}</h1>
-        <p>${sections[template]}</p>
-        <section class="server-card">
-          <strong>Server says:</strong>
-          <span>\${serverMessage}</span>
-        </section>
-        <p class="hint">Run <code>lemine dev</code> to start the client and server together.</p>
-      </main>
-      <style>
-        :root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #111827; background: #f7f7fb; }
-        body { margin: 0; }
-        .shell { width: min(900px, calc(100% - 32px)); margin: 10vh auto; padding: 48px; border-radius: 32px; background: white; box-shadow: 0 24px 80px rgb(15 23 42 / .12); }
-        .eyebrow { color: #635bff; text-transform: uppercase; font-weight: 900; letter-spacing: .14em; }
-        h1 { font-size: clamp(2.5rem, 8vw, 6rem); line-height: .9; margin: 0 0 20px; text-transform: capitalize; }
-        p { color: #667085; font-size: 1.2rem; }
-        code { background: #eef2ff; color: #3730a3; padding: 2px 6px; border-radius: 8px; }
-        .server-card { display: grid; gap: 8px; border: 1px solid #d9ddff; background: #f5f6ff; border-radius: 18px; padding: 18px; margin: 24px 0; }
-        .server-card span { color: #475467; }
-        .hint { font-size: 1rem; }
-      </style>
-    \`
-  }
-}
+export function App() {
+  const [serverMessage, setServerMessage] = useSignal('Loading server message...')
 
-void render()
+  useMount(() => {
+    void loadServerMessage().then(setServerMessage)
+  })
+
+  return (
+    <main class="shell">
+      <p class="eyebrow">LemineJS ${template} template</p>
+      <h1>${title}</h1>
+      <p>${sections[template]}</p>
+      <section class="server-card">
+        <strong>Server says:</strong>
+        <span>{serverMessage}</span>
+      </section>
+      <p class="hint">
+        Run <code>lemine dev</code> to start the client and server together.
+      </p>
+    </main>
+  )
+}
 `
 }
 
-function apiRouteSource(language: CreateOptions['language']): string {
+function stylesSource(): string {
+  return `:root {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color: #111827;
+  background: #f7f7fb;
+}
+
+body {
+  margin: 0;
+}
+
+.shell {
+  width: min(900px, calc(100% - 32px));
+  margin: 10vh auto;
+  padding: 48px;
+  border-radius: 32px;
+  background: white;
+  box-shadow: 0 24px 80px rgb(15 23 42 / 12%);
+}
+
+.eyebrow {
+  color: #635bff;
+  text-transform: uppercase;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+h1 {
+  font-size: clamp(2.5rem, 8vw, 6rem);
+  line-height: .9;
+  margin: 0 0 20px;
+  text-transform: capitalize;
+}
+
+p {
+  color: #667085;
+  font-size: 1.2rem;
+}
+
+code {
+  background: #eef2ff;
+  color: #3730a3;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.server-card {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #d9ddff;
+  background: #f5f6ff;
+  border-radius: 18px;
+  padding: 18px;
+  margin: 24px 0;
+}
+
+.server-card span {
+  color: #475467;
+}
+
+.hint {
+  font-size: 1rem;
+}
+`
+}
+
+function apiRouteSource(language: RouteLanguage): string {
   const type = language === 'ts' ? ': Promise<Response>' : ''
   return `export async function GET()${type} {
   return Response.json({
@@ -193,22 +352,36 @@ function apiRouteSource(language: CreateOptions['language']): string {
 `
 }
 
-function packageJson(name: string): string {
+function packageJson(name: string, language: SourceLanguage): string {
+  const isTypeScript = isTypeScriptLanguage(language)
+  const scripts = isTypeScript
+    ? {
+        dev: 'lemine dev',
+        'dev:client': 'vite --host 0.0.0.0 --port 3000',
+        'dev:server': 'lemine dev --server-only',
+        build: 'tsc -p tsconfig.json --noEmit && vite build',
+        preview: 'vite preview --host 0.0.0.0',
+      }
+    : {
+        dev: 'lemine dev',
+        'dev:client': 'vite --host 0.0.0.0 --port 3000',
+        'dev:server': 'lemine dev --server-only',
+        build: 'vite build',
+        preview: 'vite preview --host 0.0.0.0',
+      }
   return `${JSON.stringify(
     {
       name,
       version: '0.0.0',
       private: true,
       type: 'module',
-      scripts: {
-        dev: 'lemine dev',
-        'dev:client': 'vite --host 0.0.0.0 --port 3000',
-        'dev:server': 'lemine dev --server-only',
-        build: 'tsc -p tsconfig.json --noEmit && vite build',
-        preview: 'vite preview --host 0.0.0.0',
+      scripts,
+      dependencies: {
+        '@leminejs/core': '^0.0.0',
       },
-      dependencies: {},
       devDependencies: {
+        '@leminejs/cli': '^0.0.0',
+        '@leminejs/vite-plugin': '^0.0.0',
         typescript: '^5.7.2',
         vite: '^6.0.5',
       },
@@ -218,43 +391,126 @@ function packageJson(name: string): string {
     },
     null,
     2,
-  )}\n`
+  )}
+`
 }
 
-function writeProjectFiles(fs: NodeFs, path: NodePath, projectDir: string, name: string, options: CreateOptions): void {
+function tsconfigSource(language: SourceLanguage): string {
+  return `${JSON.stringify(
+    {
+      compilerOptions: {
+        target: 'ES2022',
+        module: 'ESNext',
+        moduleResolution: 'Bundler',
+        strict: true,
+        jsx: 'preserve',
+        jsxImportSource: '@leminejs/core',
+        allowJs: !isTypeScriptLanguage(language),
+        checkJs: false,
+        skipLibCheck: true,
+      },
+      include: ['app', 'pages', 'lemine-env.d.ts'],
+    },
+    null,
+    2,
+  )}
+`
+}
+
+function viteConfigSource(_language: SourceLanguage): string {
+  return `import { defineConfig } from 'vite'
+import { lemine } from '@leminejs/vite-plugin'
+
+export default defineConfig({
+  plugins: [lemine()],
+  server: {
+    proxy: {
+      '/api': 'http://localhost:3001',
+    },
+  },
+})
+`
+}
+
+function readmeSource(name: string, language: SourceLanguage): string {
+  return `# ${name}
+
+This project was created with \`lemine create\`.
+
+## Project structure
+
+- \`app/\` contains your app entry, JSX components, styles, and API routes.
+- \`pages/\` is available for page-style routes as your app grows.
+- \`public/\` stores static assets served from the site root.
+
+## Scripts
+
+- \`pnpm dev\` starts the Lemine client and server.
+- \`pnpm build\` builds the app${isTypeScriptLanguage(language) ? ' after type-checking it' : ''}.
+- \`pnpm preview\` previews the production build.
+`
+}
+
+function writeProjectFiles(
+  fs: NodeFs,
+  path: NodePath,
+  projectDir: string,
+  name: string,
+  options: CreateOptions,
+): void {
+  const appExtension = jsxLanguage(options.language)
+  const mainExtension = options.language
+  const apiExtension = routeLanguage(options.language)
+  const configExtension = isTypeScriptLanguage(options.language) ? 'ts' : 'js'
+
   fs.mkdirSync(projectDir, { recursive: true })
-  fs.mkdirSync(path.join(projectDir, 'src'), { recursive: true })
+  fs.mkdirSync(path.join(projectDir, 'app'), { recursive: true })
   fs.mkdirSync(path.join(projectDir, 'app', 'api', 'hello'), { recursive: true })
+  fs.mkdirSync(path.join(projectDir, 'pages'), { recursive: true })
+  fs.mkdirSync(path.join(projectDir, 'public'), { recursive: true })
   fs.writeFileSync(
     path.join(projectDir, 'index.html'),
-    `<!doctype html>\n<html lang="en">\n  <head>\n    <meta charset="UTF-8" />\n    <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n    <title>${name}</title>\n  </head>\n  <body>\n    <div id="app"></div>\n    <script type="module" src="/src/main.${options.language}"></script>\n  </body>\n</html>\n`,
-  )
-  fs.writeFileSync(path.join(projectDir, 'src', `main.${options.language}`), appSource(name, options.template, options.language))
-  fs.writeFileSync(path.join(projectDir, 'app', 'api', 'hello', `route.${options.language}`), apiRouteSource(options.language))
-  fs.writeFileSync(path.join(projectDir, 'package.json'), packageJson(name))
-  fs.writeFileSync(
-    path.join(projectDir, 'tsconfig.json'),
-    `${JSON.stringify(
-      {
-        compilerOptions: {
-          target: 'ES2022',
-          module: 'ESNext',
-          moduleResolution: 'Bundler',
-          strict: true,
-          jsx: 'preserve',
-          jsxImportSource: '@leminejs/core',
-          skipLibCheck: true,
-        },
-        include: ['src', 'app'],
-      },
-      null,
-      2,
-    )}\n`,
+    `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${name}</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/app/main.${mainExtension}"></script>
+  </body>
+</html>
+`,
   )
   fs.writeFileSync(
-    path.join(projectDir, 'vite.config.ts'),
-    "import { defineConfig } from 'vite'\n\nexport default defineConfig({\n  server: {\n    proxy: {\n      '/api': 'http://localhost:3001'\n    }\n  }\n})\n",
+    path.join(projectDir, 'app', `main.${mainExtension}`),
+    mainSource(options.language),
   )
+  fs.writeFileSync(
+    path.join(projectDir, 'app', `App.${appExtension}`),
+    appSource(name, options.template, options.language),
+  )
+  fs.writeFileSync(path.join(projectDir, 'app', 'styles.css'), stylesSource())
+  fs.writeFileSync(
+    path.join(projectDir, 'app', 'api', 'hello', `route.${apiExtension}`),
+    apiRouteSource(apiExtension),
+  )
+  fs.writeFileSync(path.join(projectDir, 'pages', `.gitkeep`), '')
+  fs.writeFileSync(path.join(projectDir, 'public', `.gitkeep`), '')
+  fs.writeFileSync(path.join(projectDir, '.gitignore'), 'node_modules\ndist\n.env\n.env.local\n')
+  fs.writeFileSync(
+    path.join(projectDir, 'lemine-env.d.ts'),
+    '/// <reference types="vite/client" />\n',
+  )
+  fs.writeFileSync(
+    path.join(projectDir, `vite.config.${configExtension}`),
+    viteConfigSource(options.language),
+  )
+  fs.writeFileSync(path.join(projectDir, 'package.json'), packageJson(name, options.language))
+  fs.writeFileSync(path.join(projectDir, 'README.md'), readmeSource(name, options.language))
+  fs.writeFileSync(path.join(projectDir, 'tsconfig.json'), tsconfigSource(options.language))
 }
 
 function installDependencies(childProcess: ChildProcess, projectDir: string): boolean {
@@ -262,9 +518,15 @@ function installDependencies(childProcess: ChildProcess, projectDir: string): bo
     childProcess.execSync('pnpm install', { cwd: projectDir, stdio: 'inherit' })
     return true
   } catch {
-    console.log('\nDependency installation did not complete, but the project files were created successfully.')
-    console.log('The generated package.json allows esbuild build scripts via pnpm.onlyBuiltDependencies.')
-    console.log('Run `pnpm install` again inside the project after resolving the package-manager message above.')
+    console.log(
+      '\nDependency installation did not complete, but the project files were created successfully.',
+    )
+    console.log(
+      'The generated package.json allows esbuild build scripts via pnpm.onlyBuiltDependencies.',
+    )
+    console.log(
+      'Run `pnpm install` again inside the project after resolving the package-manager message above.',
+    )
     return false
   }
 }
@@ -276,19 +538,42 @@ function responseJson(response: HttpResponse, statusCode: number, body: unknown)
   response.end(JSON.stringify(body))
 }
 
-async function invokeApiRoute(fs: NodeFs, path: NodePath, projectDir: string, requestPath: string, method: string): Promise<Response | undefined> {
-  const segments = requestPath.replace(/^\/api\/?/, '').split('/').filter(Boolean)
+async function invokeApiRoute(
+  fs: NodeFs,
+  path: NodePath,
+  projectDir: string,
+  requestPath: string,
+  method: string,
+): Promise<Response | undefined> {
+  const segments = requestPath
+    .replace(/^\/api\/?/, '')
+    .split('/')
+    .filter(Boolean)
   const routeBase = path.join(projectDir, 'app', 'api', ...segments, 'route')
-  const routeFile = ['ts', 'js'].map((extension) => `${routeBase}.${extension}`).find((file) => fs.existsSync(file))
+  const routeFile = ['ts', 'js']
+    .map((extension) => `${routeBase}.${extension}`)
+    .find((file) => fs.existsSync(file))
   if (!routeFile) return undefined
   const source = fs.readFileSync(routeFile, 'utf8')
-  const match = source.match(new RegExp(`export\\s+async\\s+function\\s+${method}\\s*\\([^)]*\\)\\s*(?::[^'{]+)?\\s*{([\\s\\S]*)}`))
+  const match = source.match(
+    new RegExp(
+      `export\\s+async\\s+function\\s+${method}\\s*\\([^)]*\\)\\s*(?::[^'{]+)?\\s*{([\\s\\S]*)}`,
+    ),
+  )
   if (!match?.[1]) return undefined
-  const factory = Function('Response', `return (async function ${method}(){${match[1]}})`) as (responseConstructor: typeof Response) => () => Promise<Response>
+  const factory = Function('Response', `return (async function ${method}(){${match[1]}})`) as (
+    responseConstructor: typeof Response,
+  ) => () => Promise<Response>
   return factory(Response)()
 }
 
-async function startApiServer(fs: NodeFs, path: NodePath, http: Http, projectDir: string, serverPort: number): Promise<HttpServer> {
+async function startApiServer(
+  fs: NodeFs,
+  path: NodePath,
+  http: Http,
+  projectDir: string,
+  serverPort: number,
+): Promise<HttpServer> {
   const server = http.createServer(async (request, response) => {
     const url = new URL(request.url ?? '/', `http://localhost:${serverPort}`)
     if (request.method === 'OPTIONS') {
@@ -296,11 +581,20 @@ async function startApiServer(fs: NodeFs, path: NodePath, http: Http, projectDir
       return
     }
     if (!url.pathname.startsWith('/api/')) {
-      responseJson(response, 404, { error: 'Not found', hint: 'Create API routes under app/api/**/route.ts' })
+      responseJson(response, 404, {
+        error: 'Not found',
+        hint: 'Create API routes under app/api/**/route.ts or route.js',
+      })
       return
     }
     try {
-      const apiResponse = await invokeApiRoute(fs, path, projectDir, url.pathname, request.method ?? 'GET')
+      const apiResponse = await invokeApiRoute(
+        fs,
+        path,
+        projectDir,
+        url.pathname,
+        request.method ?? 'GET',
+      )
       if (!apiResponse) {
         responseJson(response, 404, { error: `No route found for ${url.pathname}` })
         return
@@ -316,7 +610,6 @@ async function startApiServer(fs: NodeFs, path: NodePath, http: Http, projectDir
   await new Promise<void>((resolve) => server.listen(serverPort, '0.0.0.0', resolve))
   return server
 }
-
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -347,7 +640,12 @@ function shellQuote(value: string): string {
 }
 
 function openBrowser(childProcess: ChildProcess, url: string): void {
-  const command = process.platform === 'darwin' ? `open ${shellQuote(url)}` : process.platform === 'win32' ? `start "" "${url}"` : `xdg-open ${shellQuote(url)}`
+  const command =
+    process.platform === 'darwin'
+      ? `open ${shellQuote(url)}`
+      : process.platform === 'win32'
+        ? `start "" "${url}"`
+        : `xdg-open ${shellQuote(url)}`
   try {
     childProcess.exec(command, { stdio: 'ignore', detached: true })
   } catch {
@@ -389,7 +687,11 @@ export async function dev(argv: string[]): Promise<void> {
     return
   }
   const viteArgs = ['exec', 'vite', '--host', '0.0.0.0', '--port', String(options.clientPort)]
-  const vite = childProcess.spawn('pnpm', viteArgs, { cwd: projectDir, stdio: 'inherit', shell: process.platform === 'win32' })
+  const vite = childProcess.spawn('pnpm', viteArgs, {
+    cwd: projectDir,
+    stdio: 'inherit',
+    shell: process.platform === 'win32',
+  })
   const url = `http://127.0.0.1:${options.clientPort}`
   console.log(`✓ Lemine server ready on http://127.0.0.1:${options.serverPort}`)
   console.log(`• Waiting for Lemine client on ${url} before opening the browser...`)
@@ -399,7 +701,9 @@ export async function dev(argv: string[]): Promise<void> {
     console.log(`✓ API routes are available on ${url}/api/* and proxied to the Lemine server`)
     if (options.open) openBrowser(childProcess, url)
   } else {
-    console.log(`⚠ Lemine client did not respond on ${url} within 30 seconds. Keeping dev processes running; open the URL manually when Vite finishes starting.`)
+    console.log(
+      `⚠ Lemine client did not respond on ${url} within 30 seconds. Keeping dev processes running; open the URL manually when Vite finishes starting.`,
+    )
   }
   const shutdown = () => {
     vite.kill('SIGTERM')
@@ -407,9 +711,11 @@ export async function dev(argv: string[]): Promise<void> {
   }
   process.on('SIGINT', shutdown)
   process.on('SIGTERM', shutdown)
-  await new Promise<void>((resolve) => vite.on('exit', () => {
-    server.close(resolve)
-  }))
+  await new Promise<void>((resolve) =>
+    vite.on('exit', () => {
+      server.close(resolve)
+    }),
+  )
 }
 
 export async function run(argv = process.argv.slice(2)): Promise<void> {
@@ -418,7 +724,8 @@ export async function run(argv = process.argv.slice(2)): Promise<void> {
     console.log(help())
     return
   }
-  if (!commands.includes(command as Command)) throw new Error(`Unknown command: ${command}\n${help()}`)
+  if (!commands.includes(command as Command))
+    throw new Error(`Unknown command: ${command}\n${help()}`)
   if (command === 'create') return create(rest)
   if (command === 'dev') return dev(rest)
   else console.log(`lemine ${command} is ready`)
