@@ -1,4 +1,3 @@
-
 #!/usr/bin/env node
 declare const process: { argv: string[] }
 const commands = ['create', 'dev', 'build', 'start', 'preview', 'add', 'generate', 'analyze'] as const
