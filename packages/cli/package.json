@@ -16,7 +16,8 @@
   },
   "files": [
     "dist",
-    "scripts"
+    "scripts",
+    "assets"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json && node ./scripts/postbuild.cjs",

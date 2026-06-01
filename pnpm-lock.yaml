@@ -41,36 +41,36 @@ importers:
 
   apps/demo:
     dependencies:
-      '@luminejs/core':
+      '@leminejs/core':
         specifier: workspace:^
         version: link:../../packages/core
-      '@luminejs/widgets':
+      '@leminejs/widgets':
         specifier: workspace:^
         version: link:../../packages/widgets
     devDependencies:
-      '@luminejs/vite-plugin':
+      '@leminejs/vite-plugin':
         specifier: workspace:^
         version: link:../../packages/vite-plugin
 
   apps/website:
     dependencies:
-      '@luminejs/core':
+      '@leminejs/core':
         specifier: workspace:^
         version: link:../../packages/core
-      '@luminejs/widgets':
+      '@leminejs/widgets':
         specifier: workspace:^
         version: link:../../packages/widgets
     devDependencies:
-      '@luminejs/vite-plugin':
+      '@leminejs/vite-plugin':
         specifier: workspace:^
         version: link:../../packages/vite-plugin
 
   packages/cli:
     dependencies:
-      '@luminejs/compiler':
+      '@leminejs/compiler':
         specifier: workspace:^
         version: link:../compiler
-      '@luminejs/server':
+      '@leminejs/server':
         specifier: workspace:^
         version: link:../server
 
@@ -82,31 +82,31 @@ importers:
 
   packages/router:
     dependencies:
-      '@luminejs/core':
+      '@leminejs/core':
         specifier: workspace:^
         version: link:../core
 
   packages/server:
     dependencies:
-      '@luminejs/compiler':
+      '@leminejs/compiler':
         specifier: workspace:^
         version: link:../compiler
-      '@luminejs/core':
+      '@leminejs/core':
         specifier: workspace:^
         version: link:../core
-      '@luminejs/router':
+      '@leminejs/router':
         specifier: workspace:^
         version: link:../router
 
   packages/vite-plugin:
     dependencies:
-      '@luminejs/compiler':
+      '@leminejs/compiler':
         specifier: workspace:^
         version: link:../compiler
 
   packages/widgets:
     dependencies:
-      '@luminejs/core':
+      '@leminejs/core':
         specifier: workspace:^
         version: link:../core
 
