@@ -98,7 +98,7 @@ async function nodeApis(): Promise<{
 }
 
 export function help(): string {
-  return `lemine <${commands.join('|')}>
+  return `lumine <${commands.join('|')}>
 
 Examples:
   lemine create my-app
@@ -250,7 +250,7 @@ export async function dev(argv: string[]): Promise<void> {
   const projectDir = process.cwd()
   const server = await startApiServer(fs, path, http, projectDir, options.serverPort)
   if (argv.includes('--server-only')) {
-    console.log(`✓ Lemine server ready on http://localhost:${options.serverPort}`)
+    console.log(`✓ Lumine server ready on http://localhost:${options.serverPort}`)
     await new Promise<void>(() => undefined)
     return
   }
@@ -261,12 +261,12 @@ export async function dev(argv: string[]): Promise<void> {
     shell: process.platform === 'win32',
   })
   const url = `http://127.0.0.1:${options.clientPort}`
-  console.log(`✓ Lemine server ready on http://127.0.0.1:${options.serverPort}`)
-  console.log(`• Waiting for Lemine client on ${url} before opening the browser...`)
+  console.log(`✓ Lumine server ready on http://127.0.0.1:${options.serverPort}`)
+  console.log(`• Waiting for Lumine client on ${url} before opening the browser...`)
   const clientReady = await waitForClient(url)
   if (clientReady) {
-    console.log(`✓ Lemine client ready on ${url}`)
-    console.log(`✓ API routes are available on ${url}/api/* and proxied to the Lemine server`)
+    console.log(`✓ Lumine client ready on ${url}`)
+    console.log(`✓ API routes are available on ${url}/api/* and proxied to the Lumine server`)
     if (options.open) openBrowser(childProcess, url)
   } else {
     console.log(
@@ -296,7 +296,7 @@ export async function run(argv = process.argv.slice(2)): Promise<void> {
     throw new Error(`Unknown command: ${command}\n${help()}`)
   if (command === 'create') return create(rest)
   if (command === 'dev') return dev(rest)
-  else console.log(`lemine ${command} is ready`)
+  else console.log(`lumine ${command} is ready`)
 }
 
 void run().catch((error: Error) => {
