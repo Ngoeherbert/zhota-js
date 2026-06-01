@@ -1,533 +1,188 @@
-declare const process: {
-  cwd(): string
-}
-declare const console: { log: (...args: unknown[]) => void }
+import { execSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
+import { basename, resolve } from 'node:path'
+import {
+  isTemplate,
+  normalizeLanguage,
+  scaffold,
+  templates,
+  type ScaffoldLanguage,
+  type ScaffoldTemplate,
+} from '../scaffold.js'
 
-type NodeFs = {
-  copyFileSync(source: string, destination: string): void
-  existsSync(path: string): boolean
-  mkdirSync(path: string, options?: { recursive?: boolean }): void
-  writeFileSync(path: string, data: string | Uint8Array): void
-}
-
-type NodePath = {
-  basename(path: string): string
-  dirname(path: string): string
-  join(...parts: string[]): string
-  resolve(...parts: string[]): string
-}
-
-type ChildProcess = {
-  execSync(
-    command: string,
-    options?: { cwd?: string; stdio?: 'inherit' | 'pipe' | 'ignore' },
-  ): unknown
-}
-
-type ExecError = Error & {
-  stdout?: { toString(): string }
-  stderr?: { toString(): string }
-  output?: Array<{ toString(): string } | undefined>
+type Prompts = {
+  intro(message: string): void
+  outro(message: string): void
+  cancel(message: string): void
+  isCancel(value: unknown): boolean
+  select<T>(options: {
+    message: string
+    options: Array<{ value: T; label: string; hint?: string }>
+  }): Promise<T | symbol>
+  spinner(): {
+    start(message: string): void
+    stop(message: string): void
+  }
 }
 
-type NodeUrl = {
-  fileURLToPath(url: unknown): string
+type CreateOptions = {
+  template?: ScaffoldTemplate | undefined
+  language?: ScaffoldLanguage | undefined
+  install: boolean
 }
 
-type CreateApis = {
-  fs: NodeFs
-  path: NodePath
-  childProcess: ChildProcess
-  nodeUrl: NodeUrl
+type ResolvedCreateOptions = {
+  template: ScaffoldTemplate
+  language: ScaffoldLanguage
+  install: boolean
 }
+
+const templateOptions: Array<{ value: ScaffoldTemplate; label: string; hint: string }> = [
+  { value: 'blank', label: 'Blank', hint: 'Empty project, just a home page' },
+  { value: 'blog', label: 'Blog', hint: 'SSG blog with markdown posts' },
+  { value: 'dashboard', label: 'Dashboard', hint: 'Admin dashboard with charts and tables' },
+  { value: 'saas', label: 'SaaS', hint: 'Full-stack with auth, API routes, and DB' },
+  { value: 'portfolio', label: 'Portfolio', hint: 'Personal portfolio site' },
+  { value: 'landing', label: 'Landing Page', hint: 'Marketing landing page with sections' },
+]
 
 const load = (id: string): Promise<unknown> =>
   Function('id', 'return import(id)')(id) as Promise<unknown>
 
-async function nodeApis(): Promise<CreateApis> {
-  const [fs, path, childProcess, nodeUrl] = await Promise.all([
-    load('node:fs'),
-    load('node:path'),
-    load('node:child_process'),
-    load('node:url'),
-  ])
-  return {
-    fs: fs as NodeFs,
-    path: path as NodePath,
-    childProcess: childProcess as ChildProcess,
-    nodeUrl: nodeUrl as NodeUrl,
-  }
+function valueAfter(args: string[], name: string): string | undefined {
+  const index = args.indexOf(name)
+  if (index < 0) return undefined
+  return args[index + 1]
 }
 
 function positionalArgs(args: string[]): string[] {
-  return args.filter((arg) => arg && !arg.startsWith('-'))
-}
-
-function layoutSource(): string {
-  return `import './globals.css'
-import { ThemeProvider } from '@leminejs/widgets'
-
-export default function RootLayout({ children }: { children: any }) {
-  return (
-    <html lang="en">
-      <body>
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
-      </body>
-    </html>
-  )
-}
-`
-}
-
-function pageSource(): string {
-  return `import { Stack, Text, Button } from '@leminejs/widgets'
-
-export default function Home() {
-  return (
-    <Stack spacing="lg" align="center" style={{ minHeight: '100vh', justifyContent: 'center' }}>
-      <Text as="h1" size="4xl" weight="bold">Welcome to LemineJS</Text>
-      <Text size="lg" color="muted">Your full-stack JSX framework</Text>
-      <Button variant="solid" color="primary">
-        Get Started
-      </Button>
-    </Stack>
-  )
-}
-`
-}
-
-function globalsSource(): string {
-  return `@import '@leminejs/widgets/tokens/globals.css';
-
-html,
-body {
-  padding: 0;
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-}
-`
-}
-
-function eslintSource(): string {
-  return `${JSON.stringify(
-    {
-      extends: ['lemine/eslint-config'],
-      rules: {},
-    },
-    null,
-    2,
-  )}
-`
-}
-
-function gitignoreSource(): string {
-  return `# dependencies
-node_modules/
-.pnpm-store/
-
-# build output
-.lemine/
-dist/
-
-# environment files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# debug logs
-npm-debug.log*
-pnpm-debug.log*
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# editor
-.vscode/
-.idea/
-*.swp
-*.swo
-`
-}
-
-function npmrcSource(): string {
-  return `onlyBuiltDependencies[]=esbuild
-onlyBuiltDependencies[]=sharp
-`
-}
-
-function envSource(): string {
-  return `/// <reference types="@leminejs/core/types" />
-
-// Augment global types for LemineJS environment
-declare namespace LemineJS {
-  interface ProcessEnv {
-    readonly NODE_ENV: 'development' | 'production' | 'test'
-    readonly LEMINE_PUBLIC_URL?: string
-  }
-}
-`
-}
-
-function configSource(): string {
-  return `/** @type {import('@leminejs/core').LemineConfig} */
-const config = {
-  // Framework settings
-  output: 'server',       // 'server' | 'static' | 'hybrid'
-
-  // Image optimization
-  images: {
-    formats: ['webp', 'avif'],
-    quality: 75,
-    sizes: [640, 750, 828, 1080, 1200, 1920],
-  },
-
-  // Font loading
-  fonts: [],
-
-  // Dev server
-  server: {
-    port: 3000,
-    open: false,
-  },
-
-  // Environment variables exposed to the client (prefix: LEMINE_PUBLIC_)
-  publicEnv: [],
-}
-
-export default config
-`
-}
-
-function packageJsonSource(name: string): string {
-  return `{
-  "name": "${name}",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev":     "lemine dev",
-    "build":   "lemine build",
-    "start":   "lemine start",
-    "preview": "lemine preview",
-    "lint":    "eslint . --ext .ts,.tsx"
-  },
-  "dependencies": {
-    "@leminejs/core":    "latest",
-    "@leminejs/widgets": "latest",
-    "@leminejs/router":  "latest",
-    "@leminejs/image":   "latest"
-  },
-  "devDependencies": {
-    "@leminejs/cli":         "latest",
-    "@leminejs/vite-plugin": "latest",
-    "typescript":            "^5.4.0",
-    "vite":                  "^6.0.0"
-  }
-}
-`
-}
-
-function readmeSource(name: string): string {
-  return `# ${name}
-
-A [LemineJS](https://leminejs.dev) application.
-
-## Getting Started
-
-Run the development server:
-
-\`\`\`bash
-lemine dev
-\`\`\`
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Available Commands
-
-| Command         | Description                        |
-|-----------------|------------------------------------|
-| \`lemine dev\`    | Start development server with HMR  |
-| \`lemine build\`  | Build for production               |
-| \`lemine start\`  | Start production server            |
-| \`lemine preview\`| Preview production build locally   |
-
-## Project Structure
-
-\`\`\`
-my-app/
-├── app/              # App router — layouts, pages, API routes
-├── node_modules/     # Installed by pnpm automatically
-├── pages/            # Pages router (optional, for simpler file-based pages)
-├── public/           # Static assets (images, fonts, favicon)
-├── .eslintrc.json
-├── .gitignore
-├── lumine-env.d.ts   # LumineJS TypeScript environment types
-├── lumine.config.js  # Framework configuration
-├── pnpm-lock.yaml    # Generated by pnpm install
-├── package.json
-├── README.md
-└── tsconfig.json
-\`\`\`
-
-## Learn More
-
-- [LemineJS Documentation](https://leminejs.dev/docs)
-- [Widget Reference](https://leminejs.dev/api)
-- [Deployment Guide](https://leminejs.dev/docs/deployment)
-`
-}
-
-function tsconfigSource(): string {
-  return `{
-  "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "react-jsx",
-    "jsxImportSource": "@leminejs/core",
-    "incremental": true,
-    "plugins": [
-      { "name": "@leminejs/typescript-plugin" }
-    ],
-    "paths": {
-      "@/*": ["./*"]
+  const positionals: string[] = []
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index]
+    if (!arg) continue
+    if (arg === '--template' || arg === '--lang') {
+      index += 1
+      continue
     }
-  },
-  "include": ["lumine-env.d.ts", "**/*.ts", "**/*.tsx", ".lumine/types/**/*.ts"],
-  "exclude": ["node_modules"]
-}
-`
+    if (!arg.startsWith('-')) positionals.push(arg)
+  }
+  return positionals
 }
 
-const FAVICON_SIZE = 32
-type Rgba = readonly [red: number, green: number, blue: number, alpha: number]
+function parseOptions(args: string[]): CreateOptions {
+  const templateFlag = valueAfter(args, '--template')
+  const langFlag = valueAfter(args, '--lang')
+  const template = templateFlag && isTemplate(templateFlag) ? templateFlag : undefined
+  const language = langFlag ? normalizeLanguage(langFlag) : undefined
 
-function setUint16LE(bytes: Uint8Array, offset: number, value: number): void {
-  bytes[offset] = value & 0xff
-  bytes[offset + 1] = (value >> 8) & 0xff
-}
+  if (templateFlag && !template) {
+    throw new Error(`Invalid template "${templateFlag}". Expected one of: ${templates.join(', ')}`)
+  }
+  if (langFlag && !language) {
+    throw new Error('Invalid language. Expected one of: ts, js')
+  }
 
-function setUint32LE(bytes: Uint8Array, offset: number, value: number): void {
-  bytes[offset] = value & 0xff
-  bytes[offset + 1] = (value >> 8) & 0xff
-  bytes[offset + 2] = (value >> 16) & 0xff
-  bytes[offset + 3] = (value >> 24) & 0xff
-}
-
-function blendPixel(pixels: Uint8Array, x: number, y: number, color: Rgba, coverage: number): void {
-  if (x < 0 || x >= FAVICON_SIZE || y < 0 || y >= FAVICON_SIZE || coverage <= 0) return
-  const index = (y * FAVICON_SIZE + x) * 4
-  const sourceAlpha = (color[3] / 255) * Math.min(1, coverage)
-  const destinationAlpha = (pixels[index + 3] ?? 0) / 255
-  const outputAlpha = sourceAlpha + destinationAlpha * (1 - sourceAlpha)
-  if (outputAlpha <= 0) return
-  pixels[index] = Math.round(
-    (color[0] * sourceAlpha + (pixels[index] ?? 0) * destinationAlpha * (1 - sourceAlpha)) /
-      outputAlpha,
-  )
-  pixels[index + 1] = Math.round(
-    (color[1] * sourceAlpha + (pixels[index + 1] ?? 0) * destinationAlpha * (1 - sourceAlpha)) /
-      outputAlpha,
-  )
-  pixels[index + 2] = Math.round(
-    (color[2] * sourceAlpha + (pixels[index + 2] ?? 0) * destinationAlpha * (1 - sourceAlpha)) /
-      outputAlpha,
-  )
-  pixels[index + 3] = Math.round(outputAlpha * 255)
-}
-
-function drawCircle(
-  pixels: Uint8Array,
-  centerX: number,
-  centerY: number,
-  radius: number,
-  color: Rgba,
-): void {
-  const minX = Math.floor(centerX - radius - 1)
-  const maxX = Math.ceil(centerX + radius + 1)
-  const minY = Math.floor(centerY - radius - 1)
-  const maxY = Math.ceil(centerY + radius + 1)
-  for (let y = minY; y <= maxY; y += 1) {
-    for (let x = minX; x <= maxX; x += 1) {
-      const distance = Math.hypot(x + 0.5 - centerX, y + 0.5 - centerY)
-      blendPixel(pixels, x, y, color, radius + 0.5 - distance)
-    }
+  return {
+    template,
+    language,
+    install: !args.includes('--no-install'),
   }
 }
 
-function createFaviconIco(): Uint8Array {
-  const pixels = new Uint8Array(FAVICON_SIZE * FAVICON_SIZE * 4)
-  const nodes: Array<{ centerX: number; centerY: number; radius: number; color: Rgba }> = [
-    { centerX: 10, centerY: 7, radius: 5, color: [62, 88, 183, 255] },
-    { centerX: 19, centerY: 5, radius: 5, color: [75, 127, 213, 255] },
-    { centerX: 7, centerY: 16, radius: 5, color: [85, 78, 184, 255] },
-    { centerX: 16, centerY: 15, radius: 5, color: [78, 180, 199, 255] },
-    { centerX: 25, centerY: 14, radius: 5, color: [94, 204, 166, 255] },
-    { centerX: 10, centerY: 25, radius: 5, color: [50, 118, 214, 255] },
-    { centerX: 21, centerY: 25, radius: 5, color: [94, 201, 165, 255] },
-  ]
-  for (const node of nodes) {
-    drawCircle(pixels, node.centerX, node.centerY, node.radius, node.color)
-  }
-
-  const headerSize = 6
-  const directoryEntrySize = 16
-  const bitmapHeaderSize = 40
-  const xorBitmapSize = FAVICON_SIZE * FAVICON_SIZE * 4
-  const andMaskRowSize = Math.ceil(FAVICON_SIZE / 32) * 4
-  const andMaskSize = andMaskRowSize * FAVICON_SIZE
-  const imageOffset = headerSize + directoryEntrySize
-  const imageSize = bitmapHeaderSize + xorBitmapSize + andMaskSize
-  const bytes = new Uint8Array(imageOffset + imageSize)
-
-  setUint16LE(bytes, 2, 1)
-  setUint16LE(bytes, 4, 1)
-  bytes[6] = FAVICON_SIZE
-  bytes[7] = FAVICON_SIZE
-  setUint16LE(bytes, 12, 32)
-  setUint32LE(bytes, 14, imageSize)
-  setUint32LE(bytes, 18, imageOffset)
-
-  setUint32LE(bytes, imageOffset, bitmapHeaderSize)
-  setUint32LE(bytes, imageOffset + 4, FAVICON_SIZE)
-  setUint32LE(bytes, imageOffset + 8, FAVICON_SIZE * 2)
-  setUint16LE(bytes, imageOffset + 12, 1)
-  setUint16LE(bytes, imageOffset + 14, 32)
-  setUint32LE(bytes, imageOffset + 20, xorBitmapSize)
-
-  const bitmapOffset = imageOffset + bitmapHeaderSize
-  for (let y = 0; y < FAVICON_SIZE; y += 1) {
-    for (let x = 0; x < FAVICON_SIZE; x += 1) {
-      const sourceIndex = ((FAVICON_SIZE - 1 - y) * FAVICON_SIZE + x) * 4
-      const targetIndex = bitmapOffset + (y * FAVICON_SIZE + x) * 4
-      bytes[targetIndex] = pixels[sourceIndex + 2] ?? 0
-      bytes[targetIndex + 1] = pixels[sourceIndex + 1] ?? 0
-      bytes[targetIndex + 2] = pixels[sourceIndex] ?? 0
-      bytes[targetIndex + 3] = pixels[sourceIndex + 3] ?? 0
-    }
-  }
-
-  const maskOffset = bitmapOffset + xorBitmapSize
-  for (let y = 0; y < FAVICON_SIZE; y += 1) {
-    for (let x = 0; x < FAVICON_SIZE; x += 1) {
-      const alpha = pixels[((FAVICON_SIZE - 1 - y) * FAVICON_SIZE + x) * 4 + 3]
-      if (alpha === 0) {
-        const maskIndex = maskOffset + y * andMaskRowSize + Math.floor(x / 8)
-        bytes[maskIndex] = (bytes[maskIndex] ?? 0) | (0x80 >> (x % 8))
-      }
-    }
-  }
-
-  return bytes
+async function loadPrompts(): Promise<Prompts> {
+  return (await load('@clack/prompts')) as Prompts
 }
 
-function copyAsset(
-  fs: NodeFs,
-  path: NodePath,
-  nodeUrl: NodeUrl,
-  fileName: string,
-  destination: string,
-): void {
-  const entryDir = path.dirname(nodeUrl.fileURLToPath(import.meta.url))
-  const source = [
-    path.resolve(entryDir, '..', 'assets', fileName),
-    path.resolve(entryDir, '..', '..', 'assets', fileName),
-  ].find((candidate) => fs.existsSync(candidate))
-  if (!source) throw new Error(`Missing bundled asset: ${fileName}`)
-  fs.copyFileSync(source, destination)
-}
-
-function writeProjectFiles(
-  fs: NodeFs,
-  path: NodePath,
-  nodeUrl: NodeUrl,
-  projectDir: string,
-  name: string,
-): void {
-  fs.mkdirSync(projectDir, { recursive: true })
-  fs.mkdirSync(path.join(projectDir, 'app', 'api'), { recursive: true })
-  fs.mkdirSync(path.join(projectDir, 'pages'), { recursive: true })
-  fs.mkdirSync(path.join(projectDir, 'public'), { recursive: true })
-
-  fs.writeFileSync(path.join(projectDir, 'app', 'layout.tsx'), layoutSource())
-  fs.writeFileSync(path.join(projectDir, 'app', 'page.tsx'), pageSource())
-  fs.writeFileSync(path.join(projectDir, 'app', 'globals.css'), globalsSource())
-  fs.writeFileSync(path.join(projectDir, 'app', 'api', '.gitkeep'), '')
-  fs.writeFileSync(path.join(projectDir, 'pages', '.gitkeep'), '')
-  fs.writeFileSync(path.join(projectDir, 'public', 'favicon.ico'), createFaviconIco())
-  copyAsset(fs, path, nodeUrl, 'lemine.svg', path.join(projectDir, 'public', 'lemine.svg'))
-  fs.writeFileSync(path.join(projectDir, '.eslintrc.json'), eslintSource())
-  fs.writeFileSync(path.join(projectDir, '.gitignore'), gitignoreSource())
-  fs.writeFileSync(path.join(projectDir, 'lumine-env.d.ts'), envSource())
-  fs.writeFileSync(path.join(projectDir, 'lumine.config.js'), configSource())
-  fs.writeFileSync(path.join(projectDir, 'package.json'), packageJsonSource(name))
-  fs.writeFileSync(path.join(projectDir, 'README.md'), readmeSource(name))
-  fs.writeFileSync(path.join(projectDir, 'tsconfig.json'), tsconfigSource())
-}
-
-function errorOutput(error: unknown): string {
-  const execError = error as ExecError
-  return [
-    execError.message,
-    execError.stdout?.toString(),
-    execError.stderr?.toString(),
-    ...(execError.output?.map((value) => value?.toString()) ?? []),
-  ]
-    .filter(Boolean)
-    .join('\n')
-}
-
-function installDependencies(
-  fs: NodeFs,
-  path: NodePath,
-  childProcess: ChildProcess,
-  projectDir: string,
-): void {
-  try {
-    childProcess.execSync('pnpm install', { cwd: projectDir, stdio: 'pipe' })
-  } catch (error) {
-    const output = errorOutput(error)
-    if (!output.includes('ERR_PNPM_IGNORED_BUILDS')) {
-      throw new Error(output || (error instanceof Error ? error.message : String(error)))
-    }
-    fs.writeFileSync(path.join(projectDir, '.npmrc'), npmrcSource())
-    try {
-      childProcess.execSync('pnpm approve-builds', { cwd: projectDir, stdio: 'ignore' })
-    } catch {
-      // Older pnpm versions do not have approve-builds; the generated .npmrc is enough for retry.
-    }
-    childProcess.execSync('pnpm install', { cwd: projectDir, stdio: 'inherit' })
+async function promptForMissingOptions(options: CreateOptions): Promise<ResolvedCreateOptions> {
+  if (options.language && options.template) {
+    return { language: options.language, template: options.template, install: options.install }
   }
+
+  const p = await loadPrompts()
+  p.intro('Welcome to LemineJS')
+
+  const language =
+    options.language ??
+    (await p.select<ScaffoldLanguage>({
+      message: 'Which language would you like to use?',
+      options: [
+        { value: 'typescript', label: 'TypeScript', hint: 'recommended' },
+        { value: 'javascript', label: 'JavaScript' },
+      ],
+    }))
+
+  if (p.isCancel(language)) {
+    p.cancel('Operation cancelled.')
+    process.exit(0)
+  }
+
+  const template =
+    options.template ??
+    (await p.select<ScaffoldTemplate>({
+      message: 'Which template would you like to start with?',
+      options: templateOptions,
+    }))
+
+  if (p.isCancel(template)) {
+    p.cancel('Operation cancelled.')
+    process.exit(0)
+  }
+
+  return {
+    language: language as ScaffoldLanguage,
+    template: template as ScaffoldTemplate,
+    install: options.install,
+  }
+}
+
+export function installDeps(projectName: string): void {
+  execSync('pnpm install', { cwd: resolve(process.cwd(), projectName), stdio: 'inherit' })
 }
 
 export async function create(argv: string[]): Promise<void> {
   const target = positionalArgs(argv)[0]
   if (!target) throw new Error('Missing project name. Usage: lemine create my-app')
-  const { fs, path, childProcess, nodeUrl } = await nodeApis()
-  const projectDir = path.resolve(process.cwd(), target)
-  const name = path.basename(projectDir)
-  if (fs.existsSync(projectDir)) throw new Error(`Directory already exists: ${projectDir}`)
-  writeProjectFiles(fs, path, nodeUrl, projectDir, name)
-  installDependencies(fs, path, childProcess, projectDir)
-  console.log(`✓ Created ${name}`)
-  console.log('')
-  console.log('  Next steps:')
-  console.log(`    cd ${name}`)
-  console.log('    lemine dev')
-  console.log('')
-  console.log('  Documentation: https://leminejs.dev/docs')
+
+  const projectDir = resolve(process.cwd(), target)
+  if (existsSync(projectDir)) throw new Error(`Directory already exists: ${projectDir}`)
+
+  const options = parseOptions(argv)
+  const nonInteractive = Boolean(options.language && options.template)
+  const resolved = await promptForMissingOptions(options)
+  const name = basename(projectDir)
+
+  if (nonInteractive) {
+    await scaffold({
+      projectName: target,
+      packageName: name,
+      language: resolved.language,
+      template: resolved.template,
+    })
+    if (resolved.install) installDeps(target)
+    console.log(
+      `✓ Done! Your project is ready.\n\n  cd ${target}\n  lemine dev\n\nDocumentation: https://leminejs.dev/docs`,
+    )
+    return
+  }
+
+  const p = await loadPrompts()
+  const spinner = p.spinner()
+  spinner.start('Creating project...')
+  await scaffold({
+    projectName: target,
+    packageName: name,
+    language: resolved.language,
+    template: resolved.template,
+  })
+  spinner.stop('Project created!')
+
+  if (resolved.install) {
+    spinner.start('Installing dependencies...')
+    installDeps(target)
+    spinner.stop('Dependencies installed!')
+  }
+
+  p.outro(
+    `Done! Your project is ready.\n\n  cd ${target}\n  lemine dev\n\nDocumentation: https://leminejs.dev/docs`,
+  )
 }

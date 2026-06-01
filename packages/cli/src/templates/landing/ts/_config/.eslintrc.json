@@ -1,0 +1,6 @@
+{
+  "extends": [
+    "lemine/eslint-config"
+  ],
+  "rules": {}
+}

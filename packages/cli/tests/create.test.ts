@@ -1,0 +1,109 @@
+import { mkdtemp, readFile, rm, stat } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { create } from '../src/commands/create'
+import { scaffold } from '../src/scaffold'
+
+const tempDirs: string[] = []
+
+async function tempRoot(): Promise<string> {
+  const dir = await mkdtemp(join(tmpdir(), 'lemine-cli-'))
+  tempDirs.push(dir)
+  return dir
+}
+
+afterEach(async () => {
+  vi.restoreAllMocks()
+  await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })))
+})
+
+describe('create scaffold', () => {
+  it('creates the blank TypeScript starter files', async () => {
+    const cwd = await tempRoot()
+
+    await scaffold({ projectName: 'test', language: 'typescript', template: 'blank', cwd })
+
+    await expect(stat(join(cwd, 'test', 'app', 'layout.tsx'))).resolves.toBeTruthy()
+    await expect(stat(join(cwd, 'test', 'app', 'page.tsx'))).resolves.toBeTruthy()
+    await expect(stat(join(cwd, 'test', 'tsconfig.json'))).resolves.toBeTruthy()
+    expect(existsSync(join(cwd, 'test', '_config'))).toBe(false)
+  })
+
+  it('TypeScript template contains .tsx files', async () => {
+    const cwd = await tempRoot()
+
+    await scaffold({ projectName: 'test', language: 'typescript', template: 'blank', cwd })
+
+    await expect(stat(join(cwd, 'test', 'app', 'page.tsx'))).resolves.toBeTruthy()
+    expect(existsSync(join(cwd, 'test', 'app', 'page.jsx'))).toBe(false)
+  })
+
+  it('JavaScript template contains .jsx files', async () => {
+    const cwd = await tempRoot()
+
+    await scaffold({ projectName: 'test', language: 'javascript', template: 'blank', cwd })
+
+    await expect(stat(join(cwd, 'test', 'app', 'page.jsx'))).resolves.toBeTruthy()
+    expect(existsSync(join(cwd, 'test', 'app', 'page.tsx'))).toBe(false)
+  })
+
+  it('replaces package.json name with projectName', async () => {
+    const cwd = await tempRoot()
+
+    await scaffold({ projectName: 'my-project', language: 'typescript', template: 'blank', cwd })
+
+    const pkg = JSON.parse(await readFile(join(cwd, 'my-project', 'package.json'), 'utf8')) as {
+      name: string
+    }
+    expect(pkg.name).toBe('my-project')
+  })
+
+  it('creates .npmrc with esbuild approval', async () => {
+    const cwd = await tempRoot()
+
+    await scaffold({ projectName: 'test', language: 'typescript', template: 'blank', cwd })
+
+    await expect(readFile(join(cwd, 'test', '.npmrc'), 'utf8')).resolves.toContain(
+      'onlyBuiltDependencies[]=esbuild',
+    )
+  })
+
+  it('saas template includes middleware.ts', async () => {
+    const cwd = await tempRoot()
+
+    await scaffold({ projectName: 'test', language: 'typescript', template: 'saas', cwd })
+
+    await expect(readFile(join(cwd, 'test', 'middleware.ts'), 'utf8')).resolves.toContain('matcher')
+  })
+
+  it('blog template includes sample markdown posts', async () => {
+    const cwd = await tempRoot()
+
+    await scaffold({ projectName: 'test', language: 'typescript', template: 'blog', cwd })
+
+    await expect(
+      readFile(join(cwd, 'test', 'content', 'posts', 'hello-world.md'), 'utf8'),
+    ).resolves.toContain('Hello World')
+    await expect(
+      stat(join(cwd, 'test', 'content', 'posts', 'getting-started.md')),
+    ).resolves.toBeTruthy()
+  })
+
+  it('--lang js skips prompts and uses JavaScript', async () => {
+    const cwd = await tempRoot()
+    const previousCwd = process.cwd()
+    vi.spyOn(console, 'log').mockImplementation(() => undefined)
+
+    try {
+      process.chdir(cwd)
+      await create(['test', '--template', 'blank', '--lang', 'js', '--no-install'])
+    } finally {
+      process.chdir(previousCwd)
+    }
+
+    await expect(stat(join(cwd, 'test', 'app', 'page.jsx'))).resolves.toBeTruthy()
+    expect(existsSync(join(cwd, 'test', 'app', 'page.tsx'))).toBe(false)
+  })
+})

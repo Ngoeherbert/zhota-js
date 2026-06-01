@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "preserve",
@@ -25,31 +21,14 @@
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
-      "@leminejs/core": [
-        "packages/core/src/index.ts"
-      ],
-      "@leminejs/widgets": [
-        "packages/widgets/src/index.ts"
-      ],
-      "@leminejs/router": [
-        "packages/router/src/index.ts"
-      ],
-      "@leminejs/server": [
-        "packages/server/src/index.ts"
-      ],
-      "@leminejs/compiler": [
-        "packages/compiler/src/index.ts"
-      ],
-      "@leminejs/image": [
-        "packages/image/src/index.ts"
-      ],
-      "@leminejs/cli": [
-        "packages/cli/src/index.ts"
-      ],
-      "@leminejs/vite-plugin": [
-        "packages/vite-plugin/src/index.ts"
-      ]
-    },
-    "ignoreDeprecations": "6.0"
+      "@leminejs/core": ["packages/core/src/index.ts"],
+      "@leminejs/widgets": ["packages/widgets/src/index.ts"],
+      "@leminejs/router": ["packages/router/src/index.ts"],
+      "@leminejs/server": ["packages/server/src/index.ts"],
+      "@leminejs/compiler": ["packages/compiler/src/index.ts"],
+      "@leminejs/image": ["packages/image/src/index.ts"],
+      "@leminejs/cli": ["packages/cli/src/index.ts"],
+      "@leminejs/vite-plugin": ["packages/vite-plugin/src/index.ts"]
+    }
   }
 }

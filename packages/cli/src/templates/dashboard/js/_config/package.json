@@ -1,0 +1,25 @@
+{
+  "name": "lemine-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "lemine dev",
+    "build": "lemine build",
+    "start": "lemine start",
+    "preview": "lemine preview",
+    "lint": "eslint . --ext .js,.jsx"
+  },
+  "dependencies": {
+    "@leminejs/core": "latest",
+    "@leminejs/widgets": "latest",
+    "@leminejs/router": "latest",
+    "@leminejs/image": "latest"
+  },
+  "devDependencies": {
+    "@leminejs/cli": "latest",
+    "@leminejs/vite-plugin": "latest",
+    "typescript": "^5.4.0",
+    "vite": "^6.0.0"
+  }
+}

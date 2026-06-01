@@ -1,7 +1,7 @@
 {
-  "name": "@luminejs/cli",
+  "name": "@leminejs/cli",
   "version": "0.0.0",
-  "description": "LumineJS cli package.",
+  "description": "LemineJS cli package.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -28,11 +28,11 @@
   },
   "sideEffects": false,
   "dependencies": {
+    "@clack/prompts": "^0.11.0",
     "@leminejs/server": "workspace:^",
     "@leminejs/compiler": "workspace:^"
   },
   "bin": {
-    "lumine": "./dist/index.js",
     "lemine": "./dist/index.js"
   }
 }
