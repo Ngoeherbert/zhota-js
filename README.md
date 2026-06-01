@@ -36,4 +36,3 @@ The demo and website apps include Vite entrypoints and browser-rendered pages, s
 
 Future tasks can deepen each subsystem with production-grade behavior, but the monorepo is no longer a placeholder-only scaffold: every package exposes concrete public APIs that match the LumineJS roadmap.
 
-
