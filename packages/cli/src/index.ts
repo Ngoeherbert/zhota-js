@@ -1,3 +1,4 @@
+
 #!/usr/bin/env node
 declare const process: { argv: string[] }
 const commands = ['create', 'dev', 'build', 'start', 'preview', 'add', 'generate', 'analyze'] as const
@@ -10,3 +11,7 @@ export async function run(argv = process.argv.slice(2)): Promise<void> {
   else console.log(`lumine ${command} is ready`)
 }
 if (typeof process !== 'undefined' && process.argv[1]?.endsWith('index.js')) void run()
+
+// Public exports for this package will be added by future LumineJS tasks.
+export {}
+
