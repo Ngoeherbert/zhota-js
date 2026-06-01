@@ -1,0 +1,13 @@
+import { widget } from '../factory'
+export const Container = widget('div', { class: 'lemine-container' })
+export const Box = widget('div', { class: 'lemine-box' })
+export const Stack = widget('div', { class: 'lemine-stack' })
+export const Row = widget('div', { class: 'lemine-row' })
+export const Grid = widget('div', { class: 'lemine-grid' })
+export const Center = widget('div', { class: 'lemine-center' })
+export const Spacer = widget('div', { class: 'lemine-spacer', 'aria-hidden': true })
+export const Divider = widget('hr', { class: 'lemine-divider' })
+export const AspectRatio = widget('div', { class: 'lemine-aspect-ratio' })
+export const ScrollArea = widget('div', { class: 'lemine-scroll-area' })
+export const BentoGrid = widget('div', { class: 'lemine-bento-grid' })
+export const BentoCard = widget('article', { class: 'lemine-bento-card' })
