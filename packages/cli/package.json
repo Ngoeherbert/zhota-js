@@ -30,8 +30,6 @@
     "@luminejs/compiler": "workspace:^"
   },
   "bin": {
-    "lumine": "./dist/index.js",
-    "lemine": "./dist/index.js"
     "lumine": "./dist/index.js"
   }
 }

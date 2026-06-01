@@ -24,8 +24,6 @@
       "import": "./dist/renderer/jsx-runtime.js",
       "require": "./dist/renderer/jsx-runtime.cjs"
     }
-
-    "./package.json": "./package.json"
   },
   "files": [
     "dist"
