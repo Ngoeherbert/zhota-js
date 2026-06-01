@@ -1,7 +1,7 @@
 {
-  "name": "@luminejs/vite-plugin",
+  "name": "@leminejs/vite-plugin",
   "version": "0.0.0",
-  "description": "LumineJS vite-plugin package.",
+  "description": "LemineJS vite-plugin package.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
