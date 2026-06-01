@@ -1,4 +1,3 @@
-
 export type LumineVitePluginOptions = {
   appDir?: string
   injectGlobalStyles?: boolean
