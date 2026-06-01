@@ -1,0 +1,36 @@
+{
+  "name": "@leminejs/cli",
+  "version": "0.0.0",
+  "description": "LemineJS cli package.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "scripts"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node ./scripts/postbuild.cjs",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint . --ext .ts,.tsx",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "@leminejs/server": "workspace:^",
+    "@leminejs/compiler": "workspace:^"
+  },
+  "bin": {
+    "lemine": "./dist/index.js"
+  }
+}
