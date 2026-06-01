@@ -1,3 +1,4 @@
+
 export type LumineVitePluginOptions = {
   appDir?: string
   injectGlobalStyles?: boolean
@@ -52,3 +53,7 @@ export function lumine(options: LumineVitePluginOptions = {}): VitePlugin {
 }
 
 export default lumine
+
+// Public exports for this package will be added by future LumineJS tasks.
+export {}
+
