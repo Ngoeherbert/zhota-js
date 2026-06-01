@@ -1,0 +1,55 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "jsxImportSource": "@luminejs/core",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "useDefineForClassFields": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@luminejs/core": [
+        "packages/core/src/index.ts"
+      ],
+      "@luminejs/widgets": [
+        "packages/widgets/src/index.ts"
+      ],
+      "@luminejs/router": [
+        "packages/router/src/index.ts"
+      ],
+      "@luminejs/server": [
+        "packages/server/src/index.ts"
+      ],
+      "@luminejs/compiler": [
+        "packages/compiler/src/index.ts"
+      ],
+      "@luminejs/image": [
+        "packages/image/src/index.ts"
+      ],
+      "@luminejs/cli": [
+        "packages/cli/src/index.ts"
+      ],
+      "@luminejs/vite-plugin": [
+        "packages/vite-plugin/src/index.ts"
+      ]
+    },
+    "ignoreDeprecations": "6.0"
+  }
+}
