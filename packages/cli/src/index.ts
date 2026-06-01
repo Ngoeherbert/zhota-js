@@ -8,18 +8,17 @@ declare const process: {
   on(event: string, listener: () => void): void
 }
 declare const console: { log: (...args: unknown[]) => void; error: (...args: unknown[]) => void }
-declare const URL: { new (input: string, base?: string): { pathname: string; searchParams: { get(name: string): string | null } } }
-
-declare const process: { argv: string[]; cwd(): string; exitCode?: number; env: Record<string, string | undefined> }
-declare const console: { log: (...args: unknown[]) => void; error: (...args: unknown[]) => void }
-
+declare const URL: {
+  new (
+    input: string,
+    base?: string,
+  ): { pathname: string; searchParams: { get(name: string): string | null } }
+}
 
 type NodeFs = {
   existsSync(path: string): boolean
   mkdirSync(path: string, options?: { recursive?: boolean }): void
-
   readFileSync(path: string, encoding: 'utf8'): string
-
   writeFileSync(path: string, data: string): void
 }
 
@@ -29,13 +28,19 @@ type NodePath = {
   basename(path: string): string
 }
 
-
-type ChildProcessHandle = { kill(signal?: string): void; on(event: string, listener: (code?: number) => void): void }
+type ChildProcessHandle = {
+  kill(signal?: string): void
+  on(event: string, listener: (code?: number) => void): void
+}
 
 type ChildProcess = {
   exec(command: string, options?: { stdio?: 'ignore'; detached?: boolean }): ChildProcessHandle
   execSync(command: string, options?: { cwd?: string; stdio?: 'inherit' | 'pipe' | 'ignore' }): void
-  spawn(command: string, args?: string[], options?: { cwd?: string; stdio?: 'inherit' | 'pipe' | 'ignore'; shell?: boolean }): ChildProcessHandle
+  spawn(
+    command: string,
+    args?: string[],
+    options?: { cwd?: string; stdio?: 'inherit' | 'pipe' | 'ignore'; shell?: boolean },
+  ): ChildProcessHandle
 }
 
 type HttpRequest = { url?: string; method?: string }
@@ -48,13 +53,11 @@ type HttpServer = {
   listen(port: number, hostname: string, callback: () => void): void
   close(callback?: () => void): void
 }
-type Http = { createServer(handler: (request: HttpRequest, response: HttpResponse) => void | Promise<void>): HttpServer }
-
-
-type ChildProcess = {
-  execSync(command: string, options?: { cwd?: string; stdio?: 'inherit' | 'pipe' | 'ignore' }): void
+type Http = {
+  createServer(
+    handler: (request: HttpRequest, response: HttpResponse) => void | Promise<void>,
+  ): HttpServer
 }
-
 
 type CreateOptions = {
   template: 'blank' | 'blog' | 'dashboard' | 'saas'
@@ -62,27 +65,45 @@ type CreateOptions = {
   install: boolean
 }
 
-
 type DevOptions = {
   clientPort: number
   serverPort: number
   open: boolean
 }
 
-const commands = ['create', 'dev', 'build', 'start', 'preview', 'add', 'generate', 'analyze'] as const
+const commands = [
+  'create',
+  'dev',
+  'build',
+  'start',
+  'preview',
+  'add',
+  'generate',
+  'analyze',
+] as const
 export type Command = (typeof commands)[number]
 
-const load = (id: string): Promise<unknown> => Function('id', 'return import(id)')(id) as Promise<unknown>
+const load = (id: string): Promise<unknown> =>
+  Function('id', 'return import(id)')(id) as Promise<unknown>
 
-
-async function nodeApis(): Promise<{ fs: NodeFs; path: NodePath; childProcess: ChildProcess; http: Http }> {
+async function nodeApis(): Promise<{
+  fs: NodeFs
+  path: NodePath
+  childProcess: ChildProcess
+  http: Http
+}> {
   const [fs, path, childProcess, http] = await Promise.all([
     load('node:fs'),
     load('node:path'),
     load('node:child_process'),
     load('node:http'),
   ])
-  return { fs: fs as NodeFs, path: path as NodePath, childProcess: childProcess as ChildProcess, http: http as Http }
+  return {
+    fs: fs as NodeFs,
+    path: path as NodePath,
+    childProcess: childProcess as ChildProcess,
+    http: http as Http,
+  }
 }
 
 export function help(): string {
@@ -95,29 +116,15 @@ Examples:
   lumine dev --port 3000 --server-port 3001 --no-open`
 }
 
-
-async function nodeApis(): Promise<{ fs: NodeFs; path: NodePath; childProcess: ChildProcess }> {
-  const [fs, path, childProcess] = await Promise.all([
-    load('node:fs'),
-    load('node:path'),
-    load('node:child_process'),
-  ])
-  return { fs: fs as NodeFs, path: path as NodePath, childProcess: childProcess as ChildProcess }
-}
-
-export function help(): string {
-  return `lumine <${commands.join('|')}>\n\nExamples:\n  lumine create my-app\n  lumine create my-app --template blog --no-install\n  lumine dev`
-}
-
-
 function positionalArgs(args: string[]): string[] {
   const values: string[] = []
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]
-    if (['--template', '-t', '--language', '--lang', '--port', '-p', '--server-port'].includes(arg ?? '')) {
-
-    if (arg === '--template' || arg === '-t' || arg === '--language' || arg === '--lang') {
-
+    if (
+      ['--template', '-t', '--language', '--lang', '--port', '-p', '--server-port'].includes(
+        arg ?? '',
+      )
+    ) {
       index += 1
       continue
     }
@@ -126,11 +133,11 @@ function positionalArgs(args: string[]): string[] {
   return values
 }
 
-
 function numberOption(args: string[], names: string[], fallback: number): number {
   const index = args.findIndex((arg) => names.includes(arg))
   const value = index >= 0 ? Number(args[index + 1]) : fallback
-  if (!Number.isFinite(value) || value <= 0) throw new Error(`Invalid numeric option for ${names.join('/')}`)
+  if (!Number.isFinite(value) || value <= 0)
+    throw new Error(`Invalid numeric option for ${names.join('/')}`)
   return value
 }
 
@@ -152,7 +159,6 @@ function parseCreateOptions(args: string[]): CreateOptions {
   }
 }
 
-
 function parseDevOptions(args: string[]): DevOptions {
   return {
     clientPort: numberOption(args, ['--port', '-p'], 3000),
@@ -161,15 +167,23 @@ function parseDevOptions(args: string[]): DevOptions {
   }
 }
 
-function appSource(name: string, template: CreateOptions['template'], language: CreateOptions['language']): string {
+function appSource(
+  name: string,
+  template: CreateOptions['template'],
+  language: CreateOptions['language'],
+): string {
   const title = name.replace(/[-_]/g, ' ')
   const sections: Record<CreateOptions['template'], string> = {
     blank: 'Edit src/main.ts and app/api/hello/route.ts to start building with LumineJS.',
     blog: 'Blog template: static posts, markdown-ready content, ISR-friendly routes, and API routes.',
-    dashboard: 'Dashboard template: client-rendered private UI with optimistic interactions and a local API.',
+    dashboard:
+      'Dashboard template: client-rendered private UI with optimistic interactions and a local API.',
     saas: 'SaaS template: API routes, server actions, pricing, auth surfaces, and dashboard shell.',
   }
-  const selector = language === 'ts' ? "document.querySelector<HTMLDivElement>('#app')" : "document.querySelector('#app')"
+  const selector =
+    language === 'ts'
+      ? "document.querySelector<HTMLDivElement>('#app')"
+      : "document.querySelector('#app')"
   const typeAnnotation = language === 'ts' ? ': Promise<string>' : ''
   return `const app = ${selector}
 
@@ -226,18 +240,6 @@ function apiRouteSource(language: CreateOptions['language']): string {
   })
 }
 `
-
-function appSource(name: string, template: CreateOptions['template'], language: CreateOptions['language']): string {
-  const title = name.replace(/[-_]/g, ' ')
-  const sections: Record<CreateOptions['template'], string> = {
-    blank: 'Edit src/main.ts to start building with LumineJS.',
-    blog: 'Blog template: static posts, markdown-ready content, and ISR-friendly routes.',
-    dashboard: 'Dashboard template: client-rendered private UI with optimistic interactions.',
-    saas: 'SaaS template: API routes, server actions, pricing, auth surfaces, and dashboard shell.',
-  }
-  const selector = language === 'ts' ? "document.querySelector<HTMLDivElement>('#app')" : "document.querySelector('#app')"
-  return `const app = ${selector}\n\nif (app) {\n  app.innerHTML = \`\n    <main class="shell">\n      <p class="eyebrow">LumineJS ${template} template</p>\n      <h1>${title}</h1>\n      <p>${sections[template]}</p>\n      <a href="https://luminejs.dev">Read the docs</a>\n    </main>\n    <style>\n      :root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #111827; background: #f7f7fb; }\n      body { margin: 0; }\n      .shell { width: min(900px, calc(100% - 32px)); margin: 10vh auto; padding: 48px; border-radius: 32px; background: white; box-shadow: 0 24px 80px rgb(15 23 42 / .12); }\n      .eyebrow { color: #635bff; text-transform: uppercase; font-weight: 900; letter-spacing: .14em; }\n      h1 { font-size: clamp(2.5rem, 8vw, 6rem); line-height: .9; margin: 0 0 20px; text-transform: capitalize; }\n      p { color: #667085; font-size: 1.2rem; }\n      a { color: #635bff; font-weight: 800; }\n    </style>\n  \`\n}\n`
-
 }
 
 function packageJson(name: string): string {
@@ -248,13 +250,9 @@ function packageJson(name: string): string {
       private: true,
       type: 'module',
       scripts: {
-        
         dev: 'lemine dev',
         'dev:client': 'vite --host 0.0.0.0 --port 3000',
         'dev:server': 'lemine dev --server-only',
-
-        dev: 'vite --host 0.0.0.0',
-
         build: 'tsc -p tsconfig.json --noEmit && vite build',
         preview: 'vite preview --host 0.0.0.0',
       },
@@ -263,9 +261,7 @@ function packageJson(name: string): string {
         '@luminejs/widgets': 'workspace:*',
       },
       devDependencies: {
-
         '@luminejs/cli': 'workspace:*',
-
         '@luminejs/vite-plugin': 'workspace:*',
         typescript: '^5.7.2',
         vite: '^6.0.5',
@@ -276,19 +272,28 @@ function packageJson(name: string): string {
   )}\n`
 }
 
-function writeProjectFiles(fs: NodeFs, path: NodePath, projectDir: string, name: string, options: CreateOptions): void {
+function writeProjectFiles(
+  fs: NodeFs,
+  path: NodePath,
+  projectDir: string,
+  name: string,
+  options: CreateOptions,
+): void {
   fs.mkdirSync(projectDir, { recursive: true })
   fs.mkdirSync(path.join(projectDir, 'src'), { recursive: true })
   fs.mkdirSync(path.join(projectDir, 'app', 'api', 'hello'), { recursive: true })
-
   fs.writeFileSync(
     path.join(projectDir, 'index.html'),
     `<!doctype html>\n<html lang="en">\n  <head>\n    <meta charset="UTF-8" />\n    <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n    <title>${name}</title>\n  </head>\n  <body>\n    <div id="app"></div>\n    <script type="module" src="/src/main.${options.language}"></script>\n  </body>\n</html>\n`,
   )
-  fs.writeFileSync(path.join(projectDir, 'src', `main.${options.language}`), appSource(name, options.template, options.language))
-
-  fs.writeFileSync(path.join(projectDir, 'app', 'api', 'hello', `route.${options.language}`), apiRouteSource(options.language))
-
+  fs.writeFileSync(
+    path.join(projectDir, 'src', `main.${options.language}`),
+    appSource(name, options.template, options.language),
+  )
+  fs.writeFileSync(
+    path.join(projectDir, 'app', 'api', 'hello', `route.${options.language}`),
+    apiRouteSource(options.language),
+  )
   fs.writeFileSync(path.join(projectDir, 'package.json'), packageJson(name))
   fs.writeFileSync(
     path.join(projectDir, 'tsconfig.json'),
@@ -303,11 +308,7 @@ function writeProjectFiles(fs: NodeFs, path: NodePath, projectDir: string, name:
           jsxImportSource: '@luminejs/core',
           skipLibCheck: true,
         },
-
         include: ['src', 'app'],
-
-        include: ['src'],
-
       },
       null,
       2,
@@ -315,11 +316,7 @@ function writeProjectFiles(fs: NodeFs, path: NodePath, projectDir: string, name:
   )
   fs.writeFileSync(
     path.join(projectDir, 'vite.config.ts'),
-
     "import { defineConfig } from 'vite'\nimport lumine from '@luminejs/vite-plugin'\n\nexport default defineConfig({\n  plugins: [lumine()],\n  server: {\n    proxy: {\n      '/api': 'http://localhost:3001'\n    }\n  }\n})\n",
-
-    "import { defineConfig } from 'vite'\nimport lumine from '@luminejs/vite-plugin'\n\nexport default defineConfig({ plugins: [lumine()] })\n",
-
   )
 }
 
@@ -328,11 +325,12 @@ function installDependencies(childProcess: ChildProcess, projectDir: string): vo
     childProcess.execSync('pnpm install', { cwd: projectDir, stdio: 'inherit' })
   } catch (error) {
     console.error('\nDependency installation failed. The project files were created successfully.')
-    console.error('Run `pnpm install` inside the project after fixing the package manager or registry issue.')
+    console.error(
+      'Run `pnpm install` inside the project after fixing the package manager or registry issue.',
+    )
     throw error
   }
 }
-
 
 function responseJson(response: HttpResponse, statusCode: number, body: unknown): void {
   response.statusCode = statusCode
@@ -341,19 +339,42 @@ function responseJson(response: HttpResponse, statusCode: number, body: unknown)
   response.end(JSON.stringify(body))
 }
 
-async function invokeApiRoute(fs: NodeFs, path: NodePath, projectDir: string, requestPath: string, method: string): Promise<Response | undefined> {
-  const segments = requestPath.replace(/^\/api\/?/, '').split('/').filter(Boolean)
+async function invokeApiRoute(
+  fs: NodeFs,
+  path: NodePath,
+  projectDir: string,
+  requestPath: string,
+  method: string,
+): Promise<Response | undefined> {
+  const segments = requestPath
+    .replace(/^\/api\/?/, '')
+    .split('/')
+    .filter(Boolean)
   const routeBase = path.join(projectDir, 'app', 'api', ...segments, 'route')
-  const routeFile = ['ts', 'js'].map((extension) => `${routeBase}.${extension}`).find((file) => fs.existsSync(file))
+  const routeFile = ['ts', 'js']
+    .map((extension) => `${routeBase}.${extension}`)
+    .find((file) => fs.existsSync(file))
   if (!routeFile) return undefined
   const source = fs.readFileSync(routeFile, 'utf8')
-  const match = source.match(new RegExp(`export\\s+async\\s+function\\s+${method}\\s*\\([^)]*\\)\\s*(?::[^'{]+)?\\s*{([\\s\\S]*)}`))
+  const match = source.match(
+    new RegExp(
+      `export\\s+async\\s+function\\s+${method}\\s*\\([^)]*\\)\\s*(?::[^'{]+)?\\s*{([\\s\\S]*)}`,
+    ),
+  )
   if (!match?.[1]) return undefined
-  const factory = Function('Response', `return (async function ${method}(){${match[1]}})`) as (responseConstructor: typeof Response) => () => Promise<Response>
+  const factory = Function('Response', `return (async function ${method}(){${match[1]}})`) as (
+    responseConstructor: typeof Response,
+  ) => () => Promise<Response>
   return factory(Response)()
 }
 
-async function startApiServer(fs: NodeFs, path: NodePath, http: Http, projectDir: string, serverPort: number): Promise<HttpServer> {
+async function startApiServer(
+  fs: NodeFs,
+  path: NodePath,
+  http: Http,
+  projectDir: string,
+  serverPort: number,
+): Promise<HttpServer> {
   const server = http.createServer(async (request, response) => {
     const url = new URL(request.url ?? '/', `http://localhost:${serverPort}`)
     if (request.method === 'OPTIONS') {
@@ -361,11 +382,20 @@ async function startApiServer(fs: NodeFs, path: NodePath, http: Http, projectDir
       return
     }
     if (!url.pathname.startsWith('/api/')) {
-      responseJson(response, 404, { error: 'Not found', hint: 'Create API routes under app/api/**/route.ts' })
+      responseJson(response, 404, {
+        error: 'Not found',
+        hint: 'Create API routes under app/api/**/route.ts',
+      })
       return
     }
     try {
-      const apiResponse = await invokeApiRoute(fs, path, projectDir, url.pathname, request.method ?? 'GET')
+      const apiResponse = await invokeApiRoute(
+        fs,
+        path,
+        projectDir,
+        url.pathname,
+        request.method ?? 'GET',
+      )
       if (!apiResponse) {
         responseJson(response, 404, { error: `No route found for ${url.pathname}` })
         return
@@ -383,14 +413,18 @@ async function startApiServer(fs: NodeFs, path: NodePath, http: Http, projectDir
 }
 
 function openBrowser(childProcess: ChildProcess, url: string): void {
-  const command = process.platform === 'darwin' ? `open ${url}` : process.platform === 'win32' ? `start ${url}` : `xdg-open ${url}`
+  const command =
+    process.platform === 'darwin'
+      ? `open ${url}`
+      : process.platform === 'win32'
+        ? `start ${url}`
+        : `xdg-open ${url}`
   try {
     childProcess.exec(command, { stdio: 'ignore', detached: true })
   } catch {
     // Opening a browser is best-effort and should never stop the dev server.
   }
 }
-
 
 export async function create(argv: string[]): Promise<void> {
   const target = positionalArgs(argv)[0]
@@ -411,7 +445,6 @@ export async function create(argv: string[]): Promise<void> {
   console.log(`\nCreated ${name}. Next steps:`)
   console.log(`  cd ${name}`)
   if (!options.install) console.log('  pnpm install')
-
   console.log('  lemine dev')
 }
 
@@ -426,7 +459,11 @@ export async function dev(argv: string[]): Promise<void> {
     return
   }
   const viteArgs = ['exec', 'vite', '--host', '0.0.0.0', '--port', String(options.clientPort)]
-  const vite = childProcess.spawn('pnpm', viteArgs, { cwd: projectDir, stdio: 'inherit', shell: process.platform === 'win32' })
+  const vite = childProcess.spawn('pnpm', viteArgs, {
+    cwd: projectDir,
+    stdio: 'inherit',
+    shell: process.platform === 'win32',
+  })
   const url = `http://localhost:${options.clientPort}`
   console.log(`✓ Lumine server ready on http://localhost:${options.serverPort}`)
   console.log(`✓ Lumine client ready on ${url}`)
@@ -438,12 +475,11 @@ export async function dev(argv: string[]): Promise<void> {
   }
   process.on('SIGINT', shutdown)
   process.on('SIGTERM', shutdown)
-  await new Promise<void>((resolve) => vite.on('exit', () => {
-    server.close(resolve)
-  }))
-
-  console.log('  pnpm dev')
-
+  await new Promise<void>((resolve) =>
+    vite.on('exit', () => {
+      server.close(resolve)
+    }),
+  )
 }
 
 export async function run(argv = process.argv.slice(2)): Promise<void> {
@@ -452,13 +488,10 @@ export async function run(argv = process.argv.slice(2)): Promise<void> {
     console.log(help())
     return
   }
-  if (!commands.includes(command as Command)) throw new Error(`Unknown command: ${command}\n${help()}`)
+  if (!commands.includes(command as Command))
+    throw new Error(`Unknown command: ${command}\n${help()}`)
   if (command === 'create') return create(rest)
-
   if (command === 'dev') return dev(rest)
-
-  if (command === 'dev') console.log('✓ Ready on http://localhost:3000')
-
   else console.log(`lumine ${command} is ready`)
 }
 
@@ -466,20 +499,3 @@ void run().catch((error: Error) => {
   console.error(error.message)
   process.exitCode = 1
 })
-
-declare const process: { argv: string[] }
-const commands = ['create', 'dev', 'build', 'start', 'preview', 'add', 'generate', 'analyze'] as const
-export type Command = (typeof commands)[number]
-export function help(): string { return `lumine <${commands.join('|')}>` }
-export async function run(argv = process.argv.slice(2)): Promise<void> {
-  const command = argv[0] as Command | undefined
-  if (!command || !commands.includes(command)) { console.log(help()); return }
-  if (command === 'dev') console.log('✓ Ready on http://localhost:3000')
-  else console.log(`lumine ${command} is ready`)
-}
-if (typeof process !== 'undefined' && process.argv[1]?.endsWith('index.js')) void run()
-
-
-// Public exports for this package will be added by future LumineJS tasks.
-export {}
-
