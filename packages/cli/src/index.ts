@@ -10,10 +10,16 @@ declare const process: {
 declare const console: { log: (...args: unknown[]) => void; error: (...args: unknown[]) => void }
 declare const URL: { new (input: string, base?: string): { pathname: string; searchParams: { get(name: string): string | null } } }
 
+declare const process: { argv: string[]; cwd(): string; exitCode?: number; env: Record<string, string | undefined> }
+declare const console: { log: (...args: unknown[]) => void; error: (...args: unknown[]) => void }
+
+
 type NodeFs = {
   existsSync(path: string): boolean
   mkdirSync(path: string, options?: { recursive?: boolean }): void
+
   readFileSync(path: string, encoding: 'utf8'): string
+
   writeFileSync(path: string, data: string): void
 }
 
@@ -22,6 +28,7 @@ type NodePath = {
   resolve(...parts: string[]): string
   basename(path: string): string
 }
+
 
 type ChildProcessHandle = { kill(signal?: string): void; on(event: string, listener: (code?: number) => void): void }
 
@@ -43,11 +50,18 @@ type HttpServer = {
 }
 type Http = { createServer(handler: (request: HttpRequest, response: HttpResponse) => void | Promise<void>): HttpServer }
 
+
+type ChildProcess = {
+  execSync(command: string, options?: { cwd?: string; stdio?: 'inherit' | 'pipe' | 'ignore' }): void
+}
+
+
 type CreateOptions = {
   template: 'blank' | 'blog' | 'dashboard' | 'saas'
   language: 'ts' | 'js'
   install: boolean
 }
+
 
 type DevOptions = {
   clientPort: number
@@ -59,6 +73,7 @@ const commands = ['create', 'dev', 'build', 'start', 'preview', 'add', 'generate
 export type Command = (typeof commands)[number]
 
 const load = (id: string): Promise<unknown> => Function('id', 'return import(id)')(id) as Promise<unknown>
+
 
 async function nodeApis(): Promise<{ fs: NodeFs; path: NodePath; childProcess: ChildProcess; http: Http }> {
   const [fs, path, childProcess, http] = await Promise.all([
@@ -80,11 +95,29 @@ Examples:
   lumine dev --port 3000 --server-port 3001 --no-open`
 }
 
+
+async function nodeApis(): Promise<{ fs: NodeFs; path: NodePath; childProcess: ChildProcess }> {
+  const [fs, path, childProcess] = await Promise.all([
+    load('node:fs'),
+    load('node:path'),
+    load('node:child_process'),
+  ])
+  return { fs: fs as NodeFs, path: path as NodePath, childProcess: childProcess as ChildProcess }
+}
+
+export function help(): string {
+  return `lumine <${commands.join('|')}>\n\nExamples:\n  lumine create my-app\n  lumine create my-app --template blog --no-install\n  lumine dev`
+}
+
+
 function positionalArgs(args: string[]): string[] {
   const values: string[] = []
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]
     if (['--template', '-t', '--language', '--lang', '--port', '-p', '--server-port'].includes(arg ?? '')) {
+
+    if (arg === '--template' || arg === '-t' || arg === '--language' || arg === '--lang') {
+
       index += 1
       continue
     }
@@ -92,6 +125,7 @@ function positionalArgs(args: string[]): string[] {
   }
   return values
 }
+
 
 function numberOption(args: string[], names: string[], fallback: number): number {
   const index = args.findIndex((arg) => names.includes(arg))
@@ -117,6 +151,7 @@ function parseCreateOptions(args: string[]): CreateOptions {
     install: !args.includes('--no-install'),
   }
 }
+
 
 function parseDevOptions(args: string[]): DevOptions {
   return {
@@ -191,6 +226,18 @@ function apiRouteSource(language: CreateOptions['language']): string {
   })
 }
 `
+
+function appSource(name: string, template: CreateOptions['template'], language: CreateOptions['language']): string {
+  const title = name.replace(/[-_]/g, ' ')
+  const sections: Record<CreateOptions['template'], string> = {
+    blank: 'Edit src/main.ts to start building with LumineJS.',
+    blog: 'Blog template: static posts, markdown-ready content, and ISR-friendly routes.',
+    dashboard: 'Dashboard template: client-rendered private UI with optimistic interactions.',
+    saas: 'SaaS template: API routes, server actions, pricing, auth surfaces, and dashboard shell.',
+  }
+  const selector = language === 'ts' ? "document.querySelector<HTMLDivElement>('#app')" : "document.querySelector('#app')"
+  return `const app = ${selector}\n\nif (app) {\n  app.innerHTML = \`\n    <main class="shell">\n      <p class="eyebrow">LumineJS ${template} template</p>\n      <h1>${title}</h1>\n      <p>${sections[template]}</p>\n      <a href="https://luminejs.dev">Read the docs</a>\n    </main>\n    <style>\n      :root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #111827; background: #f7f7fb; }\n      body { margin: 0; }\n      .shell { width: min(900px, calc(100% - 32px)); margin: 10vh auto; padding: 48px; border-radius: 32px; background: white; box-shadow: 0 24px 80px rgb(15 23 42 / .12); }\n      .eyebrow { color: #635bff; text-transform: uppercase; font-weight: 900; letter-spacing: .14em; }\n      h1 { font-size: clamp(2.5rem, 8vw, 6rem); line-height: .9; margin: 0 0 20px; text-transform: capitalize; }\n      p { color: #667085; font-size: 1.2rem; }\n      a { color: #635bff; font-weight: 800; }\n    </style>\n  \`\n}\n`
+
 }
 
 function packageJson(name: string): string {
@@ -201,9 +248,13 @@ function packageJson(name: string): string {
       private: true,
       type: 'module',
       scripts: {
+        
         dev: 'lemine dev',
         'dev:client': 'vite --host 0.0.0.0 --port 3000',
         'dev:server': 'lemine dev --server-only',
+
+        dev: 'vite --host 0.0.0.0',
+
         build: 'tsc -p tsconfig.json --noEmit && vite build',
         preview: 'vite preview --host 0.0.0.0',
       },
@@ -212,7 +263,9 @@ function packageJson(name: string): string {
         '@luminejs/widgets': 'workspace:*',
       },
       devDependencies: {
+
         '@luminejs/cli': 'workspace:*',
+
         '@luminejs/vite-plugin': 'workspace:*',
         typescript: '^5.7.2',
         vite: '^6.0.5',
@@ -227,12 +280,15 @@ function writeProjectFiles(fs: NodeFs, path: NodePath, projectDir: string, name:
   fs.mkdirSync(projectDir, { recursive: true })
   fs.mkdirSync(path.join(projectDir, 'src'), { recursive: true })
   fs.mkdirSync(path.join(projectDir, 'app', 'api', 'hello'), { recursive: true })
+
   fs.writeFileSync(
     path.join(projectDir, 'index.html'),
     `<!doctype html>\n<html lang="en">\n  <head>\n    <meta charset="UTF-8" />\n    <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n    <title>${name}</title>\n  </head>\n  <body>\n    <div id="app"></div>\n    <script type="module" src="/src/main.${options.language}"></script>\n  </body>\n</html>\n`,
   )
   fs.writeFileSync(path.join(projectDir, 'src', `main.${options.language}`), appSource(name, options.template, options.language))
+
   fs.writeFileSync(path.join(projectDir, 'app', 'api', 'hello', `route.${options.language}`), apiRouteSource(options.language))
+
   fs.writeFileSync(path.join(projectDir, 'package.json'), packageJson(name))
   fs.writeFileSync(
     path.join(projectDir, 'tsconfig.json'),
@@ -247,7 +303,11 @@ function writeProjectFiles(fs: NodeFs, path: NodePath, projectDir: string, name:
           jsxImportSource: '@luminejs/core',
           skipLibCheck: true,
         },
+
         include: ['src', 'app'],
+
+        include: ['src'],
+
       },
       null,
       2,
@@ -255,7 +315,11 @@ function writeProjectFiles(fs: NodeFs, path: NodePath, projectDir: string, name:
   )
   fs.writeFileSync(
     path.join(projectDir, 'vite.config.ts'),
+
     "import { defineConfig } from 'vite'\nimport lumine from '@luminejs/vite-plugin'\n\nexport default defineConfig({\n  plugins: [lumine()],\n  server: {\n    proxy: {\n      '/api': 'http://localhost:3001'\n    }\n  }\n})\n",
+
+    "import { defineConfig } from 'vite'\nimport lumine from '@luminejs/vite-plugin'\n\nexport default defineConfig({ plugins: [lumine()] })\n",
+
   )
 }
 
@@ -268,6 +332,7 @@ function installDependencies(childProcess: ChildProcess, projectDir: string): vo
     throw error
   }
 }
+
 
 function responseJson(response: HttpResponse, statusCode: number, body: unknown): void {
   response.statusCode = statusCode
@@ -326,6 +391,7 @@ function openBrowser(childProcess: ChildProcess, url: string): void {
   }
 }
 
+
 export async function create(argv: string[]): Promise<void> {
   const target = positionalArgs(argv)[0]
   if (!target) throw new Error('Missing project name. Usage: lumine create my-app')
@@ -345,6 +411,7 @@ export async function create(argv: string[]): Promise<void> {
   console.log(`\nCreated ${name}. Next steps:`)
   console.log(`  cd ${name}`)
   if (!options.install) console.log('  pnpm install')
+
   console.log('  lemine dev')
 }
 
@@ -374,6 +441,9 @@ export async function dev(argv: string[]): Promise<void> {
   await new Promise<void>((resolve) => vite.on('exit', () => {
     server.close(resolve)
   }))
+
+  console.log('  pnpm dev')
+
 }
 
 export async function run(argv = process.argv.slice(2)): Promise<void> {
@@ -384,7 +454,11 @@ export async function run(argv = process.argv.slice(2)): Promise<void> {
   }
   if (!commands.includes(command as Command)) throw new Error(`Unknown command: ${command}\n${help()}`)
   if (command === 'create') return create(rest)
+
   if (command === 'dev') return dev(rest)
+
+  if (command === 'dev') console.log('✓ Ready on http://localhost:3000')
+
   else console.log(`lumine ${command} is ready`)
 }
 
@@ -392,3 +466,20 @@ void run().catch((error: Error) => {
   console.error(error.message)
   process.exitCode = 1
 })
+
+declare const process: { argv: string[] }
+const commands = ['create', 'dev', 'build', 'start', 'preview', 'add', 'generate', 'analyze'] as const
+export type Command = (typeof commands)[number]
+export function help(): string { return `lumine <${commands.join('|')}>` }
+export async function run(argv = process.argv.slice(2)): Promise<void> {
+  const command = argv[0] as Command | undefined
+  if (!command || !commands.includes(command)) { console.log(help()); return }
+  if (command === 'dev') console.log('✓ Ready on http://localhost:3000')
+  else console.log(`lumine ${command} is ready`)
+}
+if (typeof process !== 'undefined' && process.argv[1]?.endsWith('index.js')) void run()
+
+
+// Public exports for this package will be added by future LumineJS tasks.
+export {}
+

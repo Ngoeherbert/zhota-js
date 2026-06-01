@@ -241,3 +241,7 @@ const styles = `
 if (localStorage.getItem('lumine-demo-theme') === 'dark') document.documentElement.classList.add('dark')
 addEventListener('popstate', () => render())
 render()
+
+// Application entrypoint placeholder. Future tasks will replace this with a LumineJS app.
+export {}
+

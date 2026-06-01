@@ -31,6 +31,5 @@
   },
   "bin": {
     "lumine": "./dist/index.js",
-    "lemine": "./dist/index.js"
   }
 }

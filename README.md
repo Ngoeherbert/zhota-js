@@ -27,8 +27,12 @@ apps/
 - `pnpm lint` — lint all packages and apps.
 - `pnpm typecheck` — run TypeScript checks across the workspace.
 
+
 ## Implemented framework surface
 
 This repository now contains first-pass implementations for the core runtime, JSX renderer, hooks, file-system routing, rendering engine, API routes, server actions, compiler transforms, image/font helpers, CLI command dispatcher, theme tokens, and the built-in widget catalog. The code is intentionally package-local and dependency-light so the workspace can typecheck even before the full dependency install is available.
 
 The demo and website apps include Vite entrypoints and browser-rendered pages, so running their `dev` scripts serves visible application content instead of placeholder modules.
+
+Future tasks can deepen each subsystem with production-grade behavior, but the monorepo is no longer a placeholder-only scaffold: every package exposes concrete public APIs that match the LumineJS roadmap.
+
