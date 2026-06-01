@@ -1,0 +1,38 @@
+{
+  "name": "@luminejs/core",
+  "version": "0.0.0",
+  "description": "LumineJS core package.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json",
+    "./jsx-runtime": {
+      "types": "./dist/renderer/jsx-runtime.d.ts",
+      "import": "./dist/renderer/jsx-runtime.js",
+      "require": "./dist/renderer/jsx-runtime.cjs"
+    },
+    "./jsx-dev-runtime": {
+      "types": "./dist/renderer/jsx-runtime.d.ts",
+      "import": "./dist/renderer/jsx-runtime.js",
+      "require": "./dist/renderer/jsx-runtime.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json --emitDeclarationOnly && vite build",
+    "dev": "vite build --watch",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint . --ext .ts,.tsx",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "sideEffects": false
+}
