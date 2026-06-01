@@ -1,7 +1,7 @@
 {
-  "name": "@leminejs/cli",
+  "name": "@luminejs/cli",
   "version": "0.0.0",
-  "description": "LemineJS cli package.",
+  "description": "LumineJS cli package.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -16,7 +16,8 @@
   },
   "files": [
     "dist",
-    "scripts"
+    "scripts",
+    "assets"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json && node ./scripts/postbuild.cjs",
@@ -31,6 +32,7 @@
     "@leminejs/compiler": "workspace:^"
   },
   "bin": {
+    "lumine": "./dist/index.js",
     "lemine": "./dist/index.js"
   }
 }
