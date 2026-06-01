@@ -10,7 +10,7 @@ import { scanRoutes } from '../../router/src/scanner'
 const tempDirs: string[] = []
 
 function makeAppDir(): string {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'lumine-extensions-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'lemine-extensions-'))
   const appDir = path.join(root, 'app')
   fs.mkdirSync(appDir, { recursive: true })
   tempDirs.push(root)
@@ -32,14 +32,14 @@ describe('extension transforms', () => {
       'export const View = ({ label }: { label: string }) => <div>{label}</div>',
       'View.tsx',
     )
-    expect(result.code).toContain('@luminejs/core/jsx-runtime')
+    expect(result.code).toContain('@leminejs/core/jsx-runtime')
     expect(result.code).toContain('jsx')
     expect(result.code).not.toContain(': { label: string }')
   })
 
   it('compiles .jsx files with JSX', () => {
     const result = transform('export const View = ({ label }) => <div>{label}</div>', 'View.jsx')
-    expect(result.code).toContain('@luminejs/core/jsx-runtime')
+    expect(result.code).toContain('@leminejs/core/jsx-runtime')
     expect(result.code).toContain('jsx')
   })
 
@@ -56,7 +56,7 @@ describe('extension transforms', () => {
 
   it('compiles .js files with JSX', () => {
     const result = transform('export const View = () => <span>Hello</span>', 'View.js')
-    expect(result.code).toContain('@luminejs/core/jsx-runtime')
+    expect(result.code).toContain('@leminejs/core/jsx-runtime')
     expect(result.code).toContain('jsx')
   })
 })

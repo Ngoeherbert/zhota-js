@@ -1,4 +1,4 @@
-export type LumineVitePluginOptions = {
+export type LemineVitePluginOptions = {
   appDir?: string
   injectGlobalStyles?: boolean
   devOverlay?: boolean
@@ -16,16 +16,16 @@ const serverActionPattern = /(['"]use server['"])/
 const clientDirectivePattern = /(['"]use client['"])/
 const supportedSourcePattern = /\.(jsx|tsx|js|ts)$/
 
-export default function luminePlugin(options: LumineVitePluginOptions = {}): VitePlugin {
+export default function leminePlugin(options: LemineVitePluginOptions = {}): VitePlugin {
   const appDir = options.appDir ?? 'app'
   return {
-    name: 'luminejs',
+    name: 'leminejs',
     enforce: 'pre',
     config() {
       return {
         esbuild: {
           jsx: 'automatic',
-          jsxImportSource: '@luminejs/core',
+          jsxImportSource: '@leminejs/core',
           include: /\.(jsx|tsx|js|ts)$/,
         },
         resolve: {
@@ -63,5 +63,4 @@ export default function luminePlugin(options: LumineVitePluginOptions = {}): Vit
   }
 }
 
-export type LemineVitePluginOptions = LumineVitePluginOptions
-export const lemine = luminePlugin
+export const lemine = leminePlugin

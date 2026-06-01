@@ -101,9 +101,9 @@ export function help(): string {
   return `lumine <${commands.join('|')}>
 
 Examples:
-  lumine create my-app
-  lumine dev
-  lumine dev --port 3000 --server-port 3001 --no-open`
+  lemine create my-app
+  lemine dev
+  lemine dev --port 3000 --server-port 3001 --no-open`
 }
 
 function numberOption(args: string[], names: string[], fallback: number): number {
@@ -270,7 +270,7 @@ export async function dev(argv: string[]): Promise<void> {
     if (options.open) openBrowser(childProcess, url)
   } else {
     console.log(
-      `⚠ Lumine client did not respond on ${url} within 30 seconds. Keeping dev processes running; open the URL manually when Vite finishes starting.`,
+      `⚠ Lemine client did not respond on ${url} within 30 seconds. Keeping dev processes running; open the URL manually when Vite finishes starting.`,
     )
   }
   const shutdown = () => {

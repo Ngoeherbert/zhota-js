@@ -65,7 +65,7 @@ function positionalArgs(args: string[]): string[] {
 
 function layoutSource(): string {
   return `import './globals.css'
-import { ThemeProvider } from '@luminejs/widgets'
+import { ThemeProvider } from '@leminejs/widgets'
 
 export default function RootLayout({ children }: { children: any }) {
   return (
@@ -82,12 +82,12 @@ export default function RootLayout({ children }: { children: any }) {
 }
 
 function pageSource(): string {
-  return `import { Stack, Text, Button } from '@luminejs/widgets'
+  return `import { Stack, Text, Button } from '@leminejs/widgets'
 
 export default function Home() {
   return (
     <Stack spacing="lg" align="center" style={{ minHeight: '100vh', justifyContent: 'center' }}>
-      <Text as="h1" size="4xl" weight="bold">Welcome to LumineJS</Text>
+      <Text as="h1" size="4xl" weight="bold">Welcome to LemineJS</Text>
       <Text size="lg" color="muted">Your full-stack JSX framework</Text>
       <Button variant="solid" color="primary">
         Get Started
@@ -99,7 +99,7 @@ export default function Home() {
 }
 
 function globalsSource(): string {
-  return `@import '@luminejs/widgets/tokens/globals.css';
+  return `@import '@leminejs/widgets/tokens/globals.css';
 
 html,
 body {
@@ -114,20 +114,7 @@ body {
 function eslintSource(): string {
   return `${JSON.stringify(
     {
-      extends: ['lumine/eslint-config'],
-      parser: '@typescript-eslint/parser',
-      parserOptions: {
-        ecmaVersion: 2020,
-        sourceType: 'module',
-        ecmaFeatures: { jsx: true },
-      },
-      settings: {
-        'import/resolver': {
-          node: {
-            extensions: ['.tsx', '.ts', '.jsx', '.js'],
-          },
-        },
-      },
+      extends: ['lemine/eslint-config'],
       rules: {},
     },
     null,
@@ -142,7 +129,7 @@ node_modules/
 .pnpm-store/
 
 # build output
-.lumine/
+.lemine/
 dist/
 
 # environment files
@@ -175,20 +162,20 @@ onlyBuiltDependencies[]=sharp
 }
 
 function envSource(): string {
-  return `/// <reference types="@luminejs/core/types" />
+  return `/// <reference types="@leminejs/core/types" />
 
-// Augment global types for LumineJS environment
-declare namespace LumineJS {
+// Augment global types for LemineJS environment
+declare namespace LemineJS {
   interface ProcessEnv {
     readonly NODE_ENV: 'development' | 'production' | 'test'
-    readonly LUMINE_PUBLIC_URL?: string
+    readonly LEMINE_PUBLIC_URL?: string
   }
 }
 `
 }
 
 function configSource(): string {
-  return `/** @type {import('@luminejs/core').LumineConfig} */
+  return `/** @type {import('@leminejs/core').LemineConfig} */
 const config = {
   // Framework settings
   output: 'server',       // 'server' | 'static' | 'hybrid'
@@ -209,7 +196,7 @@ const config = {
     open: false,
   },
 
-  // Environment variables exposed to the client (prefix: LUMINE_PUBLIC_)
+  // Environment variables exposed to the client (prefix: LEMINE_PUBLIC_)
   publicEnv: [],
 }
 
@@ -224,21 +211,21 @@ function packageJsonSource(name: string): string {
   "private": true,
   "type": "module",
   "scripts": {
-    "dev":     "lumine dev",
-    "build":   "lumine build",
-    "start":   "lumine start",
-    "preview": "lumine preview",
+    "dev":     "lemine dev",
+    "build":   "lemine build",
+    "start":   "lemine start",
+    "preview": "lemine preview",
     "lint":    "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
-    "@luminejs/core":    "latest",
-    "@luminejs/widgets": "latest",
-    "@luminejs/router":  "latest",
-    "@luminejs/image":   "latest"
+    "@leminejs/core":    "latest",
+    "@leminejs/widgets": "latest",
+    "@leminejs/router":  "latest",
+    "@leminejs/image":   "latest"
   },
   "devDependencies": {
-    "@luminejs/cli":         "latest",
-    "@luminejs/vite-plugin": "latest",
+    "@leminejs/cli":         "latest",
+    "@leminejs/vite-plugin": "latest",
     "typescript":            "^5.4.0",
     "vite":                  "^6.0.0"
   }
@@ -249,14 +236,14 @@ function packageJsonSource(name: string): string {
 function readmeSource(name: string): string {
   return `# ${name}
 
-A [LumineJS](https://luminejs.dev) application.
+A [LemineJS](https://leminejs.dev) application.
 
 ## Getting Started
 
 Run the development server:
 
 \`\`\`bash
-lumine dev
+lemine dev
 \`\`\`
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
@@ -265,10 +252,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 | Command         | Description                        |
 |-----------------|------------------------------------|
-| \`lumine dev\`    | Start development server with HMR  |
-| \`lumine build\`  | Build for production               |
-| \`lumine start\`  | Start production server            |
-| \`lumine preview\`| Preview production build locally   |
+| \`lemine dev\`    | Start development server with HMR  |
+| \`lemine build\`  | Build for production               |
+| \`lemine start\`  | Start production server            |
+| \`lemine preview\`| Preview production build locally   |
 
 ## Project Structure
 
@@ -277,15 +264,15 @@ my-app/
 ├── app/              # App router — layouts, pages, API routes
 ├── pages/            # Pages router (alternative routing)
 ├── public/           # Static assets
-├── lumine.config.js  # Framework configuration
+├── lemine.config.js  # Framework configuration
 └── tsconfig.json     # TypeScript configuration
 \`\`\`
 
 ## Learn More
 
-- [LumineJS Documentation](https://luminejs.dev/docs)
-- [Widget Reference](https://luminejs.dev/api)
-- [Deployment Guide](https://luminejs.dev/docs/deployment)
+- [LemineJS Documentation](https://leminejs.dev/docs)
+- [Widget Reference](https://leminejs.dev/api)
+- [Deployment Guide](https://leminejs.dev/docs/deployment)
 `
 }
 
@@ -295,7 +282,6 @@ function tsconfigSource(): string {
     "target": "ES2020",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
-    "checkJs": false,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
@@ -305,20 +291,17 @@ function tsconfigSource(): string {
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "@luminejs/core",
+    "jsxImportSource": "@leminejs/core",
     "incremental": true,
+    "plugins": [
+      { "name": "@leminejs/typescript-plugin" }
+    ],
     "paths": {
       "@/*": ["./*"]
     }
   },
-  "include": [
-    "lumine-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    "**/*.js",
-    "**/*.jsx"
-  ],
-  "exclude": ["node_modules", ".lumine"]
+  "include": ["next-env.d.ts", "lemine-env.d.ts", "**/*.ts", "**/*.tsx", ".lemine/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }
 `
 }
@@ -479,12 +462,12 @@ function writeProjectFiles(
   fs.writeFileSync(path.join(projectDir, 'app', 'api', '.gitkeep'), '')
   fs.writeFileSync(path.join(projectDir, 'pages', '.gitkeep'), '')
   fs.writeFileSync(path.join(projectDir, 'public', 'favicon.ico'), createFaviconIco())
-  copyAsset(fs, path, nodeUrl, 'lumine.svg', path.join(projectDir, 'public', 'lumine.svg'))
+  copyAsset(fs, path, nodeUrl, 'lemine.svg', path.join(projectDir, 'public', 'lemine.svg'))
   fs.writeFileSync(path.join(projectDir, '.eslintrc.json'), eslintSource())
   fs.writeFileSync(path.join(projectDir, '.gitignore'), gitignoreSource())
   fs.writeFileSync(path.join(projectDir, '.npmrc'), npmrcSource())
-  fs.writeFileSync(path.join(projectDir, 'lumine-env.d.ts'), envSource())
-  fs.writeFileSync(path.join(projectDir, 'lumine.config.js'), configSource())
+  fs.writeFileSync(path.join(projectDir, 'lemine-env.d.ts'), envSource())
+  fs.writeFileSync(path.join(projectDir, 'lemine.config.js'), configSource())
   fs.writeFileSync(path.join(projectDir, 'package.json'), packageJsonSource(name))
   fs.writeFileSync(path.join(projectDir, 'README.md'), readmeSource(name))
   fs.writeFileSync(path.join(projectDir, 'tsconfig.json'), tsconfigSource())
@@ -527,7 +510,7 @@ function installDependencies(
 
 export async function create(argv: string[]): Promise<void> {
   const target = positionalArgs(argv)[0]
-  if (!target) throw new Error('Missing project name. Usage: lumine create my-app')
+  if (!target) throw new Error('Missing project name. Usage: lemine create my-app')
   const { fs, path, childProcess, nodeUrl } = await nodeApis()
   const projectDir = path.resolve(process.cwd(), target)
   const name = path.basename(projectDir)
@@ -538,7 +521,7 @@ export async function create(argv: string[]): Promise<void> {
   console.log('')
   console.log('  Next steps:')
   console.log(`    cd ${name}`)
-  console.log('    lumine dev')
+  console.log('    lemine dev')
   console.log('')
-  console.log('  Documentation: https://luminejs.dev/docs')
+  console.log('  Documentation: https://leminejs.dev/docs')
 }
