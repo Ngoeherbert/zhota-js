@@ -26,8 +26,9 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@luminejs/server": "workspace:^",
-    "@luminejs/compiler": "workspace:^"
+    "@luminejs/cli": "link:",
+    "@luminejs/compiler": "workspace:^",
+    "@luminejs/server": "workspace:^"
   },
   "bin": {
     "lumine": "./dist/index.js"
