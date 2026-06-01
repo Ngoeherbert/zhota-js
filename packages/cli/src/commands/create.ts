@@ -306,11 +306,127 @@ function tsconfigSource(): string {
 `
 }
 
-const FAVICON_ICO_BYTES = Uint8Array.from([
-  0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 32, 0, 48, 0, 0, 0, 22, 0, 0, 0, 40, 0, 0, 0, 1, 0, 0, 0, 2,
-  0, 0, 0, 1, 0, 32, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 196, 0,
-  255, 0, 0, 0, 0,
-])
+const FAVICON_SIZE = 32
+type Rgba = readonly [red: number, green: number, blue: number, alpha: number]
+
+function setUint16LE(bytes: Uint8Array, offset: number, value: number): void {
+  bytes[offset] = value & 0xff
+  bytes[offset + 1] = (value >> 8) & 0xff
+}
+
+function setUint32LE(bytes: Uint8Array, offset: number, value: number): void {
+  bytes[offset] = value & 0xff
+  bytes[offset + 1] = (value >> 8) & 0xff
+  bytes[offset + 2] = (value >> 16) & 0xff
+  bytes[offset + 3] = (value >> 24) & 0xff
+}
+
+function blendPixel(pixels: Uint8Array, x: number, y: number, color: Rgba, coverage: number): void {
+  if (x < 0 || x >= FAVICON_SIZE || y < 0 || y >= FAVICON_SIZE || coverage <= 0) return
+  const index = (y * FAVICON_SIZE + x) * 4
+  const sourceAlpha = (color[3] / 255) * Math.min(1, coverage)
+  const destinationAlpha = (pixels[index + 3] ?? 0) / 255
+  const outputAlpha = sourceAlpha + destinationAlpha * (1 - sourceAlpha)
+  if (outputAlpha <= 0) return
+  pixels[index] = Math.round(
+    (color[0] * sourceAlpha + (pixels[index] ?? 0) * destinationAlpha * (1 - sourceAlpha)) /
+      outputAlpha,
+  )
+  pixels[index + 1] = Math.round(
+    (color[1] * sourceAlpha + (pixels[index + 1] ?? 0) * destinationAlpha * (1 - sourceAlpha)) /
+      outputAlpha,
+  )
+  pixels[index + 2] = Math.round(
+    (color[2] * sourceAlpha + (pixels[index + 2] ?? 0) * destinationAlpha * (1 - sourceAlpha)) /
+      outputAlpha,
+  )
+  pixels[index + 3] = Math.round(outputAlpha * 255)
+}
+
+function drawCircle(
+  pixels: Uint8Array,
+  centerX: number,
+  centerY: number,
+  radius: number,
+  color: Rgba,
+): void {
+  const minX = Math.floor(centerX - radius - 1)
+  const maxX = Math.ceil(centerX + radius + 1)
+  const minY = Math.floor(centerY - radius - 1)
+  const maxY = Math.ceil(centerY + radius + 1)
+  for (let y = minY; y <= maxY; y += 1) {
+    for (let x = minX; x <= maxX; x += 1) {
+      const distance = Math.hypot(x + 0.5 - centerX, y + 0.5 - centerY)
+      blendPixel(pixels, x, y, color, radius + 0.5 - distance)
+    }
+  }
+}
+
+function createFaviconIco(): Uint8Array {
+  const pixels = new Uint8Array(FAVICON_SIZE * FAVICON_SIZE * 4)
+  const nodes: Array<{ centerX: number; centerY: number; radius: number; color: Rgba }> = [
+    { centerX: 10, centerY: 7, radius: 5, color: [62, 88, 183, 255] },
+    { centerX: 19, centerY: 5, radius: 5, color: [75, 127, 213, 255] },
+    { centerX: 7, centerY: 16, radius: 5, color: [85, 78, 184, 255] },
+    { centerX: 16, centerY: 15, radius: 5, color: [78, 180, 199, 255] },
+    { centerX: 25, centerY: 14, radius: 5, color: [94, 204, 166, 255] },
+    { centerX: 10, centerY: 25, radius: 5, color: [50, 118, 214, 255] },
+    { centerX: 21, centerY: 25, radius: 5, color: [94, 201, 165, 255] },
+  ]
+  for (const node of nodes) {
+    drawCircle(pixels, node.centerX, node.centerY, node.radius, node.color)
+  }
+
+  const headerSize = 6
+  const directoryEntrySize = 16
+  const bitmapHeaderSize = 40
+  const xorBitmapSize = FAVICON_SIZE * FAVICON_SIZE * 4
+  const andMaskRowSize = Math.ceil(FAVICON_SIZE / 32) * 4
+  const andMaskSize = andMaskRowSize * FAVICON_SIZE
+  const imageOffset = headerSize + directoryEntrySize
+  const imageSize = bitmapHeaderSize + xorBitmapSize + andMaskSize
+  const bytes = new Uint8Array(imageOffset + imageSize)
+
+  setUint16LE(bytes, 2, 1)
+  setUint16LE(bytes, 4, 1)
+  bytes[6] = FAVICON_SIZE
+  bytes[7] = FAVICON_SIZE
+  setUint16LE(bytes, 12, 32)
+  setUint32LE(bytes, 14, imageSize)
+  setUint32LE(bytes, 18, imageOffset)
+
+  setUint32LE(bytes, imageOffset, bitmapHeaderSize)
+  setUint32LE(bytes, imageOffset + 4, FAVICON_SIZE)
+  setUint32LE(bytes, imageOffset + 8, FAVICON_SIZE * 2)
+  setUint16LE(bytes, imageOffset + 12, 1)
+  setUint16LE(bytes, imageOffset + 14, 32)
+  setUint32LE(bytes, imageOffset + 20, xorBitmapSize)
+
+  const bitmapOffset = imageOffset + bitmapHeaderSize
+  for (let y = 0; y < FAVICON_SIZE; y += 1) {
+    for (let x = 0; x < FAVICON_SIZE; x += 1) {
+      const sourceIndex = ((FAVICON_SIZE - 1 - y) * FAVICON_SIZE + x) * 4
+      const targetIndex = bitmapOffset + (y * FAVICON_SIZE + x) * 4
+      bytes[targetIndex] = pixels[sourceIndex + 2] ?? 0
+      bytes[targetIndex + 1] = pixels[sourceIndex + 1] ?? 0
+      bytes[targetIndex + 2] = pixels[sourceIndex] ?? 0
+      bytes[targetIndex + 3] = pixels[sourceIndex + 3] ?? 0
+    }
+  }
+
+  const maskOffset = bitmapOffset + xorBitmapSize
+  for (let y = 0; y < FAVICON_SIZE; y += 1) {
+    for (let x = 0; x < FAVICON_SIZE; x += 1) {
+      const alpha = pixels[((FAVICON_SIZE - 1 - y) * FAVICON_SIZE + x) * 4 + 3]
+      if (alpha === 0) {
+        const maskIndex = maskOffset + y * andMaskRowSize + Math.floor(x / 8)
+        bytes[maskIndex] = (bytes[maskIndex] ?? 0) | (0x80 >> (x % 8))
+      }
+    }
+  }
+
+  return bytes
+}
 
 function copyAsset(
   fs: NodeFs,
@@ -345,7 +461,7 @@ function writeProjectFiles(
   fs.writeFileSync(path.join(projectDir, 'app', 'globals.css'), globalsSource())
   fs.writeFileSync(path.join(projectDir, 'app', 'api', '.gitkeep'), '')
   fs.writeFileSync(path.join(projectDir, 'pages', '.gitkeep'), '')
-  fs.writeFileSync(path.join(projectDir, 'public', 'favicon.ico'), FAVICON_ICO_BYTES)
+  fs.writeFileSync(path.join(projectDir, 'public', 'favicon.ico'), createFaviconIco())
   copyAsset(fs, path, nodeUrl, 'lumine.svg', path.join(projectDir, 'public', 'lumine.svg'))
   fs.writeFileSync(path.join(projectDir, '.eslintrc.json'), eslintSource())
   fs.writeFileSync(path.join(projectDir, '.gitignore'), gitignoreSource())
