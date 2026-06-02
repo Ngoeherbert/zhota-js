@@ -1,4 +1,4 @@
-import { Container, Stack, Text } from '@luminejs/widgets'
+import { Container, Stack, Text } from '@leminejs/widgets'
 import { getPostBySlug, getAllPosts } from '../../../lib/posts'
 
 export const config = { render: 'static', revalidate: 3600 }

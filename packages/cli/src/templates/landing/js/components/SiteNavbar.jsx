@@ -1,1 +1,1 @@
-export function SiteNavbar() { return <nav>LumineJS</nav> }
+export function SiteNavbar() { return <nav>LemineJS</nav> }

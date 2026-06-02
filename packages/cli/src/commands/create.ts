@@ -8,7 +8,7 @@ import {
   templates,
   type ScaffoldLanguage,
   type ScaffoldTemplate,
-} from '../scaffold.js'
+} from '../scaffold'
 
 type Prompts = {
   intro(message: string): void
@@ -99,7 +99,7 @@ async function promptForMissingOptions(options: CreateOptions): Promise<Resolved
   }
 
   const p = await loadPrompts()
-  p.intro('Welcome to LumineJS')
+  p.intro('Welcome to LemineJS')
 
   const language =
     options.language ??
@@ -141,7 +141,7 @@ export function installDeps(projectName: string): void {
 
 export async function create(argv: string[]): Promise<void> {
   const target = positionalArgs(argv)[0]
-  if (!target) throw new Error('Missing project name. Usage: lumine create my-app')
+  if (!target) throw new Error('Missing project name. Usage: lemine create my-app')
 
   const projectDir = resolve(process.cwd(), target)
   if (existsSync(projectDir)) throw new Error(`Directory already exists: ${projectDir}`)
@@ -160,7 +160,7 @@ export async function create(argv: string[]): Promise<void> {
     })
     if (resolved.install) installDeps(target)
     console.log(
-      `✓ Done! Your project is ready.\n\n  cd ${target}\n  lumine dev\n\nDocumentation: https://luminejs.dev/docs`,
+      `✓ Done! Your project is ready.\n\n  cd ${target}\n  lemine dev\n\nDocumentation: https://leminejs.dev/docs`,
     )
     return
   }
@@ -183,6 +183,6 @@ export async function create(argv: string[]): Promise<void> {
   }
 
   p.outro(
-    `Done! Your project is ready.\n\n  cd ${target}\n  lumine dev\n\nDocumentation: https://luminejs.dev/docs`,
+    `Done! Your project is ready.\n\n  cd ${target}\n  lemine dev\n\nDocumentation: https://leminejs.dev/docs`,
   )
 }

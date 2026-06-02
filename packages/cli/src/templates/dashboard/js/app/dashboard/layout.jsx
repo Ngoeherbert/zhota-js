@@ -1,4 +1,4 @@
-import { Row, Sidebar, SidebarItem, Box } from '@luminejs/widgets'
+import { Row, Sidebar, SidebarItem, Box } from '@leminejs/widgets'
 
 export default function DashboardLayout({ children }) {
   return (

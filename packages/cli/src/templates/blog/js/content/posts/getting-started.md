@@ -1,7 +1,7 @@
 ---
 title: Getting Started
 date: 2025-01-02
-excerpt: Build your first LumineJS app
+excerpt: Build your first LemineJS app
 ---
 
 # Getting Started

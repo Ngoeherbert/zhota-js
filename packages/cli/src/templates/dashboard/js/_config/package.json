@@ -1,24 +1,24 @@
 {
-  "name": "lumine-app",
+  "name": "lemine-app",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "lumine dev",
-    "build": "lumine build",
-    "start": "lumine start",
-    "preview": "lumine preview",
+    "dev": "lemine dev",
+    "build": "lemine build",
+    "start": "lemine start",
+    "preview": "lemine preview",
     "lint": "eslint . --ext .js,.jsx"
   },
   "dependencies": {
-    "@luminejs/core": "latest",
-    "@luminejs/widgets": "latest",
-    "@luminejs/router": "latest",
-    "@luminejs/image": "latest"
+    "@leminejs/core": "latest",
+    "@leminejs/widgets": "latest",
+    "@leminejs/router": "latest",
+    "@leminejs/image": "latest"
   },
   "devDependencies": {
-    "@luminejs/cli": "latest",
-    "@luminejs/vite-plugin": "latest",
+    "@leminejs/cli": "latest",
+    "@leminejs/vite-plugin": "latest",
     "typescript": "^5.4.0",
     "vite": "^6.0.0"
   }

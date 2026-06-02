@@ -3,7 +3,7 @@
     "strict": true,
     "checkJs": false,
     "jsx": "react-jsx",
-    "jsxImportSource": "@luminejs/core",
+    "jsxImportSource": "@leminejs/core",
     "moduleResolution": "bundler",
     "module": "esnext",
     "target": "ES2020"
@@ -11,10 +11,10 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "lumine-env.d.ts"
+    "lemine-env.d.ts"
   ],
   "exclude": [
     "node_modules",
-    ".lumine"
+    ".lemine"
   ]
 }

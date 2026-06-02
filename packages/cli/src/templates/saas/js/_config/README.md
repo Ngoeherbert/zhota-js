@@ -1,11 +1,11 @@
-# Lumine App
+# Lemine App
 
-Created with `lumine create`.
+Created with `lemine create`.
 
 ## Getting Started
 
 ```bash
-lumine dev
+lemine dev
 ```
 
-Documentation: https://luminejs.dev/docs
+Documentation: https://leminejs.dev/docs

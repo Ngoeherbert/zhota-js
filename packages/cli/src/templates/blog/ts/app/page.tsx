@@ -1,4 +1,4 @@
-import { Container, Stack, Text, Grid } from '@luminejs/widgets'
+import { Container, Stack, Text, Grid } from '@leminejs/widgets'
 import { PostCard } from '../components/PostCard'
 import { getAllPosts } from '../lib/posts'
 

@@ -1,4 +1,4 @@
-import { Card, Stack, Text, Button } from '@luminejs/widgets'
+import { Card, Stack, Text, Button } from '@leminejs/widgets'
 
 export function PostCard({ post }) {
   return (

@@ -9,7 +9,7 @@ import { scaffold } from '../src/scaffold'
 const tempDirs: string[] = []
 
 async function tempRoot(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'lumine-cli-'))
+  const dir = await mkdtemp(join(tmpdir(), 'lemine-cli-'))
   tempDirs.push(dir)
   return dir
 }

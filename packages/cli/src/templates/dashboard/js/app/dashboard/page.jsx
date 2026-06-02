@@ -1,4 +1,4 @@
-import { Stack, Text, Grid, Stat, Card } from '@luminejs/widgets'
+import { Stack, Text, Grid, Stat, Card } from '@leminejs/widgets'
 import { mockStats } from '../../lib/mock-data'
 
 export const config = { render: 'client' }

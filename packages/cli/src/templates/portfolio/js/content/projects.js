@@ -1,1 +1,1 @@
-export const projects = [{ title: 'Lumine Portfolio', description: 'A fast personal site.' }]
+export const projects = [{ title: 'Lemine Portfolio', description: 'A fast personal site.' }]

@@ -1,6 +1,6 @@
 {
   "extends": [
-    "lumine/eslint-config"
+    "lemine/eslint-config"
   ],
   "rules": {}
 }

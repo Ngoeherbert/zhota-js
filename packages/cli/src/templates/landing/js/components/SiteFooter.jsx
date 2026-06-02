@@ -1,1 +1,1 @@
-export function SiteFooter() { return <footer>© LumineJS</footer> }
+export function SiteFooter() { return <footer>© LemineJS</footer> }
