@@ -1,5 +1,5 @@
 import './globals.css'
-import { ThemeProvider } from '@leminejs/widgets'
+import { ThemeProvider } from '@luminejs/widgets'
 
 export default function RootLayout({ children }: { children: unknown }) {
   return (

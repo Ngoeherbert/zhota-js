@@ -8,7 +8,7 @@ import {
   templates,
   type ScaffoldLanguage,
   type ScaffoldTemplate,
-} from '../scaffold.js'
+} from '../scaffold'
 
 type Prompts = {
   intro(message: string): void
