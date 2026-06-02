@@ -40,5 +40,5 @@
     "@leminejs/cli": ["packages/cli/src/index.ts"],
     "@leminejs/vite-plugin": ["packages/vite-plugin/src/index.ts"]
   },
-  "ignoreDeprecations": "6.0"
+  // "ignoreDeprecations": "6.0"
 }
