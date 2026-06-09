@@ -8,12 +8,15 @@ export default defineConfig({
     lib: {
       entry,
       formats: ['es', 'cjs'],
-      fileName: (format) => (format === 'es' ? 'index.js' : 'index.cjs')
+      fileName: (format) => (format === 'es' ? 'index.js' : 'index.cjs'),
     },
     rollupOptions: {
-      external: [/^@leminejs\//]
+      external: [/^@leminejs\//],
+      output: {
+        exports: 'named',
+      },
     },
     sourcemap: true,
-    emptyOutDir: false
-  }
+    emptyOutDir: false,
+  },
 })
