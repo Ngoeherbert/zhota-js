@@ -82,9 +82,12 @@ describe('create scaffold', () => {
 
     const pkg = JSON.parse(await readFile(join(cwd, 'test', 'package.json'), 'utf8')) as {
       dependencies?: Record<string, string>
+      pnpm?: { overrides?: Record<string, string> }
     }
-    expect(pkg.dependencies).toHaveProperty('@leminejs/router', 'latest')
-    expect(pkg.dependencies).toHaveProperty('@leminejs/image', 'latest')
+    expect(pkg.dependencies?.['@leminejs/router']).toMatch(/^file:/)
+    expect(pkg.dependencies?.['@leminejs/image']).toMatch(/^file:/)
+    expect(pkg.dependencies?.['@leminejs/widgets']).toMatch(/^file:/)
+    expect(pkg.pnpm?.overrides?.['@leminejs/server']).toMatch(/^file:/)
   })
 
   it('saas template includes middleware.ts', async () => {

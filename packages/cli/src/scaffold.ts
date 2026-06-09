@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -14,6 +15,63 @@ export type ScaffoldOptions = {
   template: ScaffoldTemplate
   cwd?: string
   packageName?: string
+}
+
+const localPackageNames = [
+  'core',
+  'widgets',
+  'router',
+  'server',
+  'compiler',
+  'image',
+  'cli',
+  'vite-plugin',
+] as const
+
+function localPackageOverrides(): Record<string, string> {
+  const currentDir = dirname(fileURLToPath(import.meta.url))
+  const cliPackageDir = resolve(currentDir, '..')
+  const workspaceRoot = resolve(cliPackageDir, '..', '..')
+  const overrides: Record<string, string> = {}
+
+  for (const packageName of localPackageNames) {
+    const packageDir = join(workspaceRoot, 'packages', packageName)
+    if (existsSync(join(packageDir, 'package.json'))) {
+      overrides[`@leminejs/${packageName}`] = `file:${packageDir}`
+    }
+  }
+
+  return overrides
+}
+
+function applyLocalPackageOverrides(pkg: AppPackageJson): void {
+  const overrides = localPackageOverrides()
+  if (Object.keys(overrides).length === 0) return
+
+  for (const dependencies of [pkg.dependencies, pkg.devDependencies]) {
+    if (!dependencies) continue
+    for (const packageName of Object.keys(dependencies)) {
+      const localPackage = overrides[packageName]
+      if (localPackage) dependencies[packageName] = localPackage
+    }
+  }
+
+  pkg.pnpm = {
+    ...pkg.pnpm,
+    overrides: {
+      ...pkg.pnpm?.overrides,
+      ...overrides,
+    },
+  }
+}
+
+type AppPackageJson = {
+  name?: string
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+  pnpm?: {
+    overrides?: Record<string, string>
+  }
 }
 
 const shortLanguages: Record<string, ScaffoldLanguage> = {
@@ -55,8 +113,9 @@ export async function scaffold(options: ScaffoldOptions): Promise<string> {
   await copyDir(configDir, projectDir)
 
   const pkgPath = join(projectDir, 'package.json')
-  const pkg = JSON.parse(await readFile(pkgPath, 'utf8')) as { name?: string }
+  const pkg = JSON.parse(await readFile(pkgPath, 'utf8')) as AppPackageJson
   pkg.name = options.packageName ?? options.projectName
+  applyLocalPackageOverrides(pkg)
   await writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
 
   return projectDir
