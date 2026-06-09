@@ -27,5 +27,8 @@
   "sideEffects": false,
   "dependencies": {
     "@leminejs/core": "workspace:^"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
