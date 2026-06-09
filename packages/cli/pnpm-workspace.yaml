@@ -1,4 +1,0 @@
-# Keep package-local pnpm invocations valid when Turbo executes this CLI package
-# with packages/cli as the working directory.
-packages:
-  - "."

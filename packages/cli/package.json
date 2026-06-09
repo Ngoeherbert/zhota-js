@@ -34,5 +34,8 @@
   },
   "bin": {
     "lemine": "./dist/index.js"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

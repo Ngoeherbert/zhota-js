@@ -29,5 +29,8 @@
     "@leminejs/core": "workspace:^",
     "@leminejs/router": "workspace:^",
     "@leminejs/compiler": "workspace:^"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
