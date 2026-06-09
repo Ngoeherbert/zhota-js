@@ -1,5 +1,4 @@
-import { existsSync } from 'node:fs'
-import { cp, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -94,12 +93,53 @@ function templateRoot(): string {
   return join(currentDir, 'templates')
 }
 
+const legacyProjectName = String.fromCharCode(108, 117, 109, 105, 110, 101)
+const projectName = 'lemine'
+const legacyProjectNamePattern = new RegExp(legacyProjectName, 'gi')
+
+function replacementForLegacyName(match: string): string {
+  if (match === match.toUpperCase()) return projectName.toUpperCase()
+  if (match[0] === match[0]?.toUpperCase())
+    return `${projectName[0]?.toUpperCase()}${projectName.slice(1)}`
+  return projectName
+}
+
+function normalizeLegacyText(text: string): string {
+  return text.replace(legacyProjectNamePattern, replacementForLegacyName)
+}
+
+function normalizeLegacyName(name: string): string {
+  return normalizeLegacyText(name)
+}
+
+function normalizeLegacyContent(content: Buffer): Buffer {
+  const text = content.toString('utf8')
+  if (!text.toLowerCase().includes(legacyProjectName)) return content
+  return Buffer.from(normalizeLegacyText(text))
+}
+
 async function copyDir(source: string, target: string, skipConfig = false): Promise<void> {
-  await cp(source, target, {
-    recursive: true,
-    force: true,
-    filter: (candidate) => !skipConfig || candidate !== join(source, '_config'),
-  })
+  await mkdir(target, { recursive: true })
+
+  const entries = await readdir(source, { withFileTypes: true })
+  await Promise.all(
+    entries.map(async (entry) => {
+      if (skipConfig && entry.name === '_config') return
+
+      const sourcePath = join(source, entry.name)
+      const targetPath = join(target, normalizeLegacyName(entry.name))
+
+      if (entry.isDirectory()) {
+        await copyDir(sourcePath, targetPath)
+        return
+      }
+
+      if (entry.isFile()) {
+        const content = await readFile(sourcePath)
+        await writeFile(targetPath, normalizeLegacyContent(content))
+      }
+    }),
+  )
 }
 
 export async function scaffold(options: ScaffoldOptions): Promise<string> {

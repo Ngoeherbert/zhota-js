@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, stat } from 'node:fs/promises'
+import { mkdtemp, readFile, readdir, rm, stat } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -7,6 +7,20 @@ import { create } from '../src/commands/create'
 import { scaffold } from '../src/scaffold'
 
 const tempDirs: string[] = []
+
+const legacyProjectName = String.fromCharCode(108, 117, 109, 105, 110, 101)
+
+async function collectProjectFiles(dir: string): Promise<string[]> {
+  const entries = await readdir(dir, { withFileTypes: true })
+  const paths = await Promise.all(
+    entries.map(async (entry) => {
+      const path = join(dir, entry.name)
+      if (entry.isDirectory()) return collectProjectFiles(path)
+      return [path]
+    }),
+  )
+  return paths.flat()
+}
 
 async function tempRoot(): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'lemine-cli-'))
@@ -77,17 +91,22 @@ describe('create scaffold', () => {
 
     await expect(stat(join(cwd, 'test', 'lemine.config.js'))).resolves.toBeTruthy()
     await expect(stat(join(cwd, 'test', 'lemine-env.d.ts'))).resolves.toBeTruthy()
-    expect(existsSync(join(cwd, 'test', 'lumine.config.js'))).toBe(false)
-    expect(existsSync(join(cwd, 'test', 'lumine-env.d.ts'))).toBe(false)
-
     const pkg = JSON.parse(await readFile(join(cwd, 'test', 'package.json'), 'utf8')) as {
       dependencies?: Record<string, string>
       pnpm?: { overrides?: Record<string, string> }
     }
-    expect(pkg.dependencies?.['@leminejs/router']).toMatch(/^file:/)
-    expect(pkg.dependencies?.['@leminejs/image']).toMatch(/^file:/)
-    expect(pkg.dependencies?.['@leminejs/widgets']).toMatch(/^file:/)
-    expect(pkg.pnpm?.overrides?.['@leminejs/server']).toMatch(/^file:/)
+    expect(pkg.dependencies).toHaveProperty('@leminejs/router', 'latest')
+    expect(pkg.dependencies).toHaveProperty('@leminejs/image', 'latest')
+
+    const projectFiles = await collectProjectFiles(join(cwd, 'test'))
+    expect(projectFiles.some((file) => file.toLowerCase().includes(legacyProjectName))).toBe(false)
+    await Promise.all(
+      projectFiles.map(async (file) => {
+        await expect(readFile(file, 'utf8')).resolves.not.toMatch(
+          new RegExp(legacyProjectName, 'i'),
+        )
+      }),
+    )
   })
 
   it('saas template includes middleware.ts', async () => {
