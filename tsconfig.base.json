@@ -30,15 +30,6 @@
       "@leminejs/image": ["packages/image/src/index.ts"],
       "@leminejs/cli": ["packages/cli/src/index.ts"],
       "@leminejs/vite-plugin": ["packages/vite-plugin/src/index.ts"]
-    },
-    "@leminejs/core": ["packages/core/src/index.ts"],
-    "@leminejs/widgets": ["packages/widgets/src/index.ts"],
-    "@leminejs/router": ["packages/router/src/index.ts"],
-    "@leminejs/server": ["packages/server/src/index.ts"],
-    "@leminejs/compiler": ["packages/compiler/src/index.ts"],
-    "@leminejs/image": ["packages/image/src/index.ts"],
-    "@leminejs/cli": ["packages/cli/src/index.ts"],
-    "@leminejs/vite-plugin": ["packages/vite-plugin/src/index.ts"]
-  },
-  // "ignoreDeprecations": "6.0"
+    }
+  }
 }
