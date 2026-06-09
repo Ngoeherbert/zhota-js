@@ -1,19 +1,22 @@
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 
-const entry = fileURLToPath(new URL('./src/index.ts', import.meta.url))
-
 export default defineConfig({
   build: {
     lib: {
-      entry,
+      entry: {
+        index: fileURLToPath(new URL('./src/index.ts', import.meta.url)),
+        'renderer/jsx-runtime': fileURLToPath(
+          new URL('./src/renderer/jsx-runtime.ts', import.meta.url),
+        ),
+      },
       formats: ['es', 'cjs'],
-      fileName: (format) => (format === 'es' ? 'index.js' : 'index.cjs')
+      fileName: (format, entryName) => (format === 'es' ? `${entryName}.js` : `${entryName}.cjs`),
     },
     rollupOptions: {
-      external: [/^@leminejs\//]
+      external: [/^@leminejs\//],
     },
     sourcemap: true,
-    emptyOutDir: false
-  }
+    emptyOutDir: false,
+  },
 })

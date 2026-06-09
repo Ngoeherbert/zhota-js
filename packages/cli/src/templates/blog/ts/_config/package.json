@@ -13,8 +13,7 @@
   "dependencies": {
     "@leminejs/core": "latest",
     "@leminejs/widgets": "latest",
-    "@leminejs/router": "latest",
-    "@leminejs/image": "latest"
+    "@leminejs/router": "latest"
   },
   "devDependencies": {
     "@leminejs/cli": "latest",

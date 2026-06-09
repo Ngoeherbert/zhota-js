@@ -206,20 +206,15 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-async function waitForClient(url: string, timeoutMs = 30_000): Promise<boolean> {
+async function waitForClient(url: string, timeoutMs = 60_000): Promise<boolean> {
   const deadline = Date.now() + timeoutMs
-  let consecutiveSuccessfulChecks = 0
   while (Date.now() < deadline) {
     try {
-      const response = await fetch(url, { method: 'GET', cache: 'no-store' })
-      consecutiveSuccessfulChecks = response.ok ? consecutiveSuccessfulChecks + 1 : 0
-      if (consecutiveSuccessfulChecks >= 3) {
-        await sleep(750)
-        return true
-      }
+      await fetch(url, { method: 'GET', cache: 'no-store' })
+      await sleep(500)
+      return true
     } catch {
-      consecutiveSuccessfulChecks = 0
-      // Vite is still starting; keep polling before opening the browser.
+      // Vite still starting, keep polling
     }
     await sleep(250)
   }
@@ -227,7 +222,7 @@ async function waitForClient(url: string, timeoutMs = 30_000): Promise<boolean> 
 }
 
 function shellQuote(value: string): string {
-  return `'${value.replace(/'/g, `'\''`)}'`
+  return `'${value.replace(/'/g, "'\\''")}'`
 }
 
 function openBrowser(childProcess: ChildProcess, url: string): void {
@@ -270,7 +265,7 @@ export async function dev(argv: string[]): Promise<void> {
     if (options.open) openBrowser(childProcess, url)
   } else {
     console.log(
-      `⚠ Lemine client did not respond on ${url} within 30 seconds. Keeping dev processes running; open the URL manually when Vite finishes starting.`,
+      `⚠ Lemine client did not respond on ${url} within 60 seconds. Keeping dev processes running; open the URL manually when Vite finishes starting.`,
     )
   }
   const shutdown = () => {
