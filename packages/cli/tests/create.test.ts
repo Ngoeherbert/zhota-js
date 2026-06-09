@@ -70,7 +70,7 @@ describe('create scaffold', () => {
     )
   })
 
-  it('uses Lemine config filenames and avoids unpublished image package dependency', async () => {
+  it('uses Lemine config filenames and keeps framework package dependencies', async () => {
     const cwd = await tempRoot()
 
     await scaffold({ projectName: 'test', language: 'typescript', template: 'blank', cwd })
@@ -83,7 +83,8 @@ describe('create scaffold', () => {
     const pkg = JSON.parse(await readFile(join(cwd, 'test', 'package.json'), 'utf8')) as {
       dependencies?: Record<string, string>
     }
-    expect(pkg.dependencies).not.toHaveProperty('@leminejs/image')
+    expect(pkg.dependencies).toHaveProperty('@leminejs/router', 'latest')
+    expect(pkg.dependencies).toHaveProperty('@leminejs/image', 'latest')
   })
 
   it('saas template includes middleware.ts', async () => {
