@@ -8,6 +8,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --concurrency=20",
+    "lemine": "node ./packages/cli/dist/index.js",
     "test": "turbo run test --parallel",
     "lint": "turbo run lint --parallel",
     "typecheck": "turbo run typecheck",
