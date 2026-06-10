@@ -19,6 +19,25 @@ apps/
   demo/         Demo full-stack application
 ```
 
+## Running the CLI locally
+
+The `lemine` binary is provided by the `@leminejs/cli` package, but it is not automatically installed as a global shell command when you clone this monorepo. If your shell prints `lemine: command not found`, build the CLI and run it through pnpm:
+
+```sh
+pnpm --filter @leminejs/cli build
+pnpm lemine --help
+pnpm lemine create my-app --template blank --lang ts --no-install
+```
+
+If you specifically want to type `lemine create my-app` without the `pnpm` prefix while working from this checkout, link the CLI package globally after building it:
+
+```sh
+pnpm --filter @leminejs/cli build
+cd packages/cli
+pnpm link --global
+lemine --help
+```
+
 ## Scripts
 
 - `pnpm build` — build all packages in dependency order with Turborepo.
