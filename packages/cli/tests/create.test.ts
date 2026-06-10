@@ -93,10 +93,12 @@ describe('create scaffold', () => {
     await expect(stat(join(cwd, 'test', 'lemine-env.d.ts'))).resolves.toBeTruthy()
     const pkg = JSON.parse(await readFile(join(cwd, 'test', 'package.json'), 'utf8')) as {
       dependencies?: Record<string, string>
-      pnpm?: { overrides?: Record<string, string> }
+      devDependencies?: Record<string, string>
     }
     expect(pkg.dependencies).toHaveProperty('@leminejs/router', 'latest')
     expect(pkg.dependencies).toHaveProperty('@leminejs/image', 'latest')
+    expect(pkg.dependencies).not.toHaveProperty('@leminejs/cli')
+    expect(pkg.devDependencies).not.toHaveProperty('@leminejs/cli')
 
     const projectFiles = await collectProjectFiles(join(cwd, 'test'))
     expect(projectFiles.some((file) => file.toLowerCase().includes(legacyProjectName))).toBe(false)
