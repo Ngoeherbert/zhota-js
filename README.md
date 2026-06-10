@@ -29,14 +29,18 @@ pnpm lemine --help
 pnpm lemine create my-app --template blank --lang ts --no-install
 ```
 
-If you specifically want to type `lemine create my-app` without the `pnpm` prefix while working from this checkout, link the CLI package globally after building it:
+If you specifically want to type `lemine create my-app` without the `pnpm` prefix while working from this checkout, pnpm must first have a global bin directory on your `PATH`. If `pnpm link --global` prints `ERR_PNPM_NO_GLOBAL_BIN_DIR`, run pnpm's setup command, restart your shell, then link the CLI package:
 
 ```sh
+pnpm setup
+exec $SHELL -l
 pnpm --filter @leminejs/cli build
 cd packages/cli
 pnpm link --global
 lemine --help
 ```
+
+If you do not want to configure pnpm global binaries, keep using `pnpm lemine ...` from the repository root instead of the bare `lemine` command.
 
 ## Scripts
 
