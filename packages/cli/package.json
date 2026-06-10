@@ -22,8 +22,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.json && node ./scripts/postbuild.cjs",
     "dev": "tsc -p tsconfig.json --watch",
+    "lemine": "node ./dist/index.js",
     "test": "vitest run --passWithNoTests",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "cd ../.. && eslint packages/cli/src packages/cli/tests packages/cli/vite.config.ts packages/cli/vitest.config.ts --ext .ts,.tsx --ignore-pattern 'packages/cli/src/templates/**'",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "sideEffects": false,
