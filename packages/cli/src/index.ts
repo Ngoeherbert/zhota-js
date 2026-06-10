@@ -102,6 +102,7 @@ export function help(): string {
 
 Examples:
   lemine create my-app
+  lemine create my-app --install
   lemine dev
   lemine dev --port 3000 --server-port 3001 --no-open`
 }
