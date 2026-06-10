@@ -15,6 +15,9 @@ export default defineConfig({
     },
     rollupOptions: {
       external: [/^@leminejs\//],
+      output: {
+        exports: 'named',
+      },
     },
     sourcemap: true,
     emptyOutDir: false,

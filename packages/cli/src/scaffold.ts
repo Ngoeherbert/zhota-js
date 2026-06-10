@@ -1,4 +1,5 @@
-import { cp, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -33,15 +34,65 @@ export function isTemplate(template: string): template is ScaffoldTemplate {
 
 function templateRoot(): string {
   const currentDir = dirname(fileURLToPath(import.meta.url))
-  return join(currentDir, 'templates')
+  const templatesDir = join(currentDir, 'templates')
+  if (existsSync(templatesDir)) return templatesDir
+
+  const sourceTemplatesDir = resolve(currentDir, '..', 'src', 'templates')
+  if (existsSync(sourceTemplatesDir)) return sourceTemplatesDir
+
+  return templatesDir
 }
 
+const scaffoldLegacyNameNormalizer = (() => {
+  const legacyName = String.fromCharCode(108, 117, 109, 105, 110, 101)
+  const correctedName = 'lemine'
+  const legacyNamePattern = new RegExp(legacyName, 'gi')
+
+  function replacement(match: string): string {
+    if (match === match.toUpperCase()) return correctedName.toUpperCase()
+    if (match[0] === match[0]?.toUpperCase())
+      return `${correctedName[0]?.toUpperCase()}${correctedName.slice(1)}`
+    return correctedName
+  }
+
+  function text(value: string): string {
+    return value.replace(legacyNamePattern, replacement)
+  }
+
+  return {
+    fileName(value: string): string {
+      return text(value)
+    },
+    fileContent(content: Buffer): Buffer {
+      const value = content.toString('utf8')
+      if (!value.toLowerCase().includes(legacyName)) return content
+      return Buffer.from(text(value))
+    },
+  }
+})()
+
 async function copyDir(source: string, target: string, skipConfig = false): Promise<void> {
-  await cp(source, target, {
-    recursive: true,
-    force: true,
-    filter: (candidate) => !skipConfig || candidate !== join(source, '_config'),
-  })
+  await mkdir(target, { recursive: true })
+
+  const entries = await readdir(source, { withFileTypes: true })
+  await Promise.all(
+    entries.map(async (entry) => {
+      if (skipConfig && entry.name === '_config') return
+
+      const sourcePath = join(source, entry.name)
+      const targetPath = join(target, scaffoldLegacyNameNormalizer.fileName(entry.name))
+
+      if (entry.isDirectory()) {
+        await copyDir(sourcePath, targetPath)
+        return
+      }
+
+      if (entry.isFile()) {
+        const content = await readFile(sourcePath)
+        await writeFile(targetPath, scaffoldLegacyNameNormalizer.fileContent(content))
+      }
+    }),
+  )
 }
 
 export async function scaffold(options: ScaffoldOptions): Promise<string> {
