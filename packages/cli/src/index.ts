@@ -19,6 +19,7 @@ declare const URL: {
 type NodeFs = {
   existsSync(path: string): boolean
   readFileSync(path: string, encoding: 'utf8'): string
+  writeFileSync(path: string, data: string): void
 }
 
 type NodePath = {
@@ -73,6 +74,7 @@ const commands = [
   'add',
   'generate',
   'analyze',
+  'repair',
 ] as const
 export type Command = (typeof commands)[number]
 export { create }
@@ -106,6 +108,7 @@ export function help(): string {
 Examples:
   lemine create my-app
   lemine create my-app --install
+  lemine repair
   lemine dev
   lemine dev --port 3000 --server-port 3001 --no-open`
 }
@@ -124,6 +127,57 @@ function parseDevOptions(args: string[]): DevOptions {
     serverPort: numberOption(args, ['--server-port'], 3001),
     open: !args.includes('--no-open'),
   }
+}
+
+type PackageJson = {
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+  pnpm?: unknown
+}
+
+const obsoleteGeneratedAppDependencies = ['@leminejs/cli', '@leminejs/vite-plugin'] as const
+
+export async function repair(): Promise<void> {
+  const { fs, path } = await nodeApis()
+  const pkgPath = path.join(process.cwd(), 'package.json')
+  if (!fs.existsSync(pkgPath)) throw new Error(`No package.json found in ${process.cwd()}`)
+
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8')) as PackageJson
+  let changed = false
+
+  for (const dependency of obsoleteGeneratedAppDependencies) {
+    if (pkg.dependencies?.[dependency]) {
+      delete pkg.dependencies[dependency]
+      changed = true
+    }
+    if (pkg.devDependencies?.[dependency]) {
+      delete pkg.devDependencies[dependency]
+      changed = true
+    }
+  }
+
+  if (pkg.dependencies && Object.keys(pkg.dependencies).length === 0) {
+    delete pkg.dependencies
+    changed = true
+  }
+  if (pkg.devDependencies && Object.keys(pkg.devDependencies).length === 0) {
+    delete pkg.devDependencies
+    changed = true
+  }
+  if (pkg.pnpm) {
+    delete pkg.pnpm
+    changed = true
+  }
+
+  if (!changed) {
+    console.log('No generated app package fixes needed.')
+    return
+  }
+
+  fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
+  console.log(
+    'Repaired package.json. Run `rm -rf node_modules pnpm-lock.yaml && pnpm install` next.',
+  )
 }
 
 function responseJson(response: HttpResponse, statusCode: number, body: unknown): void {
@@ -308,6 +362,7 @@ export async function run(argv = process.argv.slice(2)): Promise<void> {
     throw new Error(`Unknown command: ${command}\n${help()}`)
   if (command === 'create') return create(rest)
   if (command === 'dev') return dev(rest)
+  if (command === 'repair') return repair()
   else console.log(`lemine ${command} is ready`)
 }
 
