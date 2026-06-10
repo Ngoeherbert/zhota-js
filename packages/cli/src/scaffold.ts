@@ -17,6 +17,63 @@ export type ScaffoldOptions = {
   packageName?: string
 }
 
+const localPackageNames = [
+  'core',
+  'widgets',
+  'router',
+  'server',
+  'compiler',
+  'image',
+  'cli',
+  'vite-plugin',
+] as const
+
+function localPackageOverrides(): Record<string, string> {
+  const currentDir = dirname(fileURLToPath(import.meta.url))
+  const cliPackageDir = resolve(currentDir, '..')
+  const workspaceRoot = resolve(cliPackageDir, '..', '..')
+  const overrides: Record<string, string> = {}
+
+  for (const packageName of localPackageNames) {
+    const packageDir = join(workspaceRoot, 'packages', packageName)
+    if (existsSync(join(packageDir, 'package.json'))) {
+      overrides[`@leminejs/${packageName}`] = `file:${packageDir}`
+    }
+  }
+
+  return overrides
+}
+
+function applyLocalPackageOverrides(pkg: AppPackageJson): void {
+  const overrides = localPackageOverrides()
+  if (Object.keys(overrides).length === 0) return
+
+  for (const dependencies of [pkg.dependencies, pkg.devDependencies]) {
+    if (!dependencies) continue
+    for (const packageName of Object.keys(dependencies)) {
+      const localPackage = overrides[packageName]
+      if (localPackage) dependencies[packageName] = localPackage
+    }
+  }
+
+  pkg.pnpm = {
+    ...pkg.pnpm,
+    overrides: {
+      ...pkg.pnpm?.overrides,
+      ...overrides,
+    },
+  }
+}
+
+type AppPackageJson = {
+  name?: string
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+  pnpm?: {
+    overrides?: Record<string, string>
+  }
+}
+
 const shortLanguages: Record<string, ScaffoldLanguage> = {
   ts: 'typescript',
   typescript: 'typescript',
@@ -41,6 +98,31 @@ function templateRoot(): string {
   if (existsSync(sourceTemplatesDir)) return sourceTemplatesDir
 
   return templatesDir
+}
+
+const legacyProjectName = String.fromCharCode(108, 117, 109, 105, 110, 101)
+const projectName = 'lemine'
+const legacyProjectNamePattern = new RegExp(legacyProjectName, 'gi')
+
+function replacementForLegacyName(match: string): string {
+  if (match === match.toUpperCase()) return projectName.toUpperCase()
+  if (match[0] === match[0]?.toUpperCase())
+    return `${projectName[0]?.toUpperCase()}${projectName.slice(1)}`
+  return projectName
+}
+
+function normalizeLegacyText(text: string): string {
+  return text.replace(legacyProjectNamePattern, replacementForLegacyName)
+}
+
+function normalizeLegacyName(name: string): string {
+  return normalizeLegacyText(name)
+}
+
+function normalizeLegacyContent(content: Buffer): Buffer {
+  const text = content.toString('utf8')
+  if (!text.toLowerCase().includes(legacyProjectName)) return content
+  return Buffer.from(normalizeLegacyText(text))
 }
 
 const legacyProjectName = String.fromCharCode(108, 117, 109, 105, 110, 101)
@@ -103,8 +185,9 @@ export async function scaffold(options: ScaffoldOptions): Promise<string> {
   await copyDir(configDir, projectDir)
 
   const pkgPath = join(projectDir, 'package.json')
-  const pkg = JSON.parse(await readFile(pkgPath, 'utf8')) as { name?: string }
+  const pkg = JSON.parse(await readFile(pkgPath, 'utf8')) as AppPackageJson
   pkg.name = options.packageName ?? options.projectName
+  applyLocalPackageOverrides(pkg)
   await writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
 
   return projectDir
