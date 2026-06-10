@@ -13,11 +13,10 @@
   "dependencies": {
     "@leminejs/core": "latest",
     "@leminejs/widgets": "latest",
-    "@leminejs/router": "latest"
+    "@leminejs/router": "latest",
+    "@leminejs/image": "latest"
   },
   "devDependencies": {
-    "@leminejs/cli": "latest",
-    "@leminejs/vite-plugin": "latest",
     "typescript": "^5.4.0",
     "vite": "^6.0.0"
   }
