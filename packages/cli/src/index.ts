@@ -45,9 +45,12 @@ type HttpResponse = {
   setHeader(name: string, value: string): void
   end(body?: string): void
 }
+type ListenError = Error & { code?: string }
+
 type HttpServer = {
   listen(port: number, hostname: string, callback: () => void): void
   close(callback?: () => void): void
+  on(event: 'error', listener: (error: ListenError) => void): void
 }
 type Http = {
   createServer(
@@ -199,7 +202,20 @@ async function startApiServer(
       responseJson(response, 500, { error: error instanceof Error ? error.message : String(error) })
     }
   })
-  await new Promise<void>((resolve) => server.listen(serverPort, '0.0.0.0', resolve))
+  await new Promise<void>((resolve, reject) => {
+    server.on('error', (error) => {
+      if (error.code === 'EADDRINUSE') {
+        reject(
+          new Error(
+            `Port ${serverPort} is already in use. Stop the existing Lemine dev server or run \`lemine dev --server-port ${serverPort + 1}\`.`,
+          ),
+        )
+        return
+      }
+      reject(error)
+    })
+    server.listen(serverPort, '0.0.0.0', resolve)
+  })
   return server
 }
 

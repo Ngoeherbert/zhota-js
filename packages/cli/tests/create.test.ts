@@ -99,6 +99,7 @@ describe('create scaffold', () => {
     expect(pkg.dependencies).toHaveProperty('@leminejs/image', 'latest')
     expect(pkg.dependencies).not.toHaveProperty('@leminejs/cli')
     expect(pkg.devDependencies).not.toHaveProperty('@leminejs/cli')
+    expect(pkg.devDependencies).not.toHaveProperty('@leminejs/vite-plugin')
 
     const projectFiles = await collectProjectFiles(join(cwd, 'test'))
     expect(projectFiles.some((file) => file.toLowerCase().includes(legacyProjectName))).toBe(false)
