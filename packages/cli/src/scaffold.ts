@@ -100,55 +100,33 @@ function templateRoot(): string {
   return templatesDir
 }
 
-const legacyProjectName = String.fromCharCode(108, 117, 109, 105, 110, 101)
-const projectName = 'lemine'
-const legacyProjectNamePattern = new RegExp(legacyProjectName, 'gi')
+const scaffoldLegacyNameNormalizer = (() => {
+  const legacyName = String.fromCharCode(108, 117, 109, 105, 110, 101)
+  const correctedName = 'lemine'
+  const legacyNamePattern = new RegExp(legacyName, 'gi')
 
-function replacementForLegacyName(match: string): string {
-  if (match === match.toUpperCase()) return projectName.toUpperCase()
-  if (match[0] === match[0]?.toUpperCase())
-    return `${projectName[0]?.toUpperCase()}${projectName.slice(1)}`
-  return projectName
-}
+  function replacement(match: string): string {
+    if (match === match.toUpperCase()) return correctedName.toUpperCase()
+    if (match[0] === match[0]?.toUpperCase())
+      return `${correctedName[0]?.toUpperCase()}${correctedName.slice(1)}`
+    return correctedName
+  }
 
-function normalizeLegacyText(text: string): string {
-  return text.replace(legacyProjectNamePattern, replacementForLegacyName)
-}
+  function text(value: string): string {
+    return value.replace(legacyNamePattern, replacement)
+  }
 
-function normalizeLegacyName(name: string): string {
-  return normalizeLegacyText(name)
-}
-
-function normalizeLegacyContent(content: Buffer): Buffer {
-  const text = content.toString('utf8')
-  if (!text.toLowerCase().includes(legacyProjectName)) return content
-  return Buffer.from(normalizeLegacyText(text))
-}
-
-const legacyProjectName = String.fromCharCode(108, 117, 109, 105, 110, 101)
-const projectName = 'lemine'
-const legacyProjectNamePattern = new RegExp(legacyProjectName, 'gi')
-
-function replacementForLegacyName(match: string): string {
-  if (match === match.toUpperCase()) return projectName.toUpperCase()
-  if (match[0] === match[0]?.toUpperCase())
-    return `${projectName[0]?.toUpperCase()}${projectName.slice(1)}`
-  return projectName
-}
-
-function normalizeLegacyText(text: string): string {
-  return text.replace(legacyProjectNamePattern, replacementForLegacyName)
-}
-
-function normalizeLegacyName(name: string): string {
-  return normalizeLegacyText(name)
-}
-
-function normalizeLegacyContent(content: Buffer): Buffer {
-  const text = content.toString('utf8')
-  if (!text.toLowerCase().includes(legacyProjectName)) return content
-  return Buffer.from(normalizeLegacyText(text))
-}
+  return {
+    fileName(value: string): string {
+      return text(value)
+    },
+    fileContent(content: Buffer): Buffer {
+      const value = content.toString('utf8')
+      if (!value.toLowerCase().includes(legacyName)) return content
+      return Buffer.from(text(value))
+    },
+  }
+})()
 
 async function copyDir(source: string, target: string, skipConfig = false): Promise<void> {
   await mkdir(target, { recursive: true })
@@ -159,7 +137,7 @@ async function copyDir(source: string, target: string, skipConfig = false): Prom
       if (skipConfig && entry.name === '_config') return
 
       const sourcePath = join(source, entry.name)
-      const targetPath = join(target, normalizeLegacyName(entry.name))
+      const targetPath = join(target, scaffoldLegacyNameNormalizer.fileName(entry.name))
 
       if (entry.isDirectory()) {
         await copyDir(sourcePath, targetPath)
@@ -168,7 +146,7 @@ async function copyDir(source: string, target: string, skipConfig = false): Prom
 
       if (entry.isFile()) {
         const content = await readFile(sourcePath)
-        await writeFile(targetPath, normalizeLegacyContent(content))
+        await writeFile(targetPath, scaffoldLegacyNameNormalizer.fileContent(content))
       }
     }),
   )
