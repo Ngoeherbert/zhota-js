@@ -8,6 +8,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --concurrency=20",
+    "lemine": "pnpm --filter @leminejs/cli run lemine",
     "test": "turbo run test --parallel",
     "lint": "turbo run lint --parallel",
     "typecheck": "turbo run typecheck",
