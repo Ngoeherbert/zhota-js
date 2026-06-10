@@ -145,4 +145,21 @@ describe('create scaffold', () => {
     await expect(stat(join(cwd, 'test', 'app', 'page.jsx'))).resolves.toBeTruthy()
     expect(existsSync(join(cwd, 'test', 'app', 'page.tsx'))).toBe(false)
   })
+
+  it('skips dependency installation by default and prints install next step', async () => {
+    const cwd = await tempRoot()
+    const previousCwd = process.cwd()
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+
+    try {
+      process.chdir(cwd)
+      await create(['test', '--template', 'blank', '--lang', 'ts'])
+    } finally {
+      process.chdir(previousCwd)
+    }
+
+    await expect(stat(join(cwd, 'test', 'package.json'))).resolves.toBeTruthy()
+    expect(existsSync(join(cwd, 'test', 'node_modules'))).toBe(false)
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('pnpm install'))
+  })
 })
