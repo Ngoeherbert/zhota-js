@@ -136,7 +136,10 @@ async function promptForMissingOptions(options: CreateOptions): Promise<Resolved
 }
 
 export function installDeps(projectName: string): void {
-  execSync('pnpm install', { cwd: resolve(process.cwd(), projectName), stdio: 'inherit' })
+  execSync('pnpm install --prefer-offline', {
+    cwd: resolve(process.cwd(), projectName),
+    stdio: 'inherit',
+  })
 }
 
 export async function create(argv: string[]): Promise<void> {
