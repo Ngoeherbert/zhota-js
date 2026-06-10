@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -90,7 +91,38 @@ export function isTemplate(template: string): template is ScaffoldTemplate {
 
 function templateRoot(): string {
   const currentDir = dirname(fileURLToPath(import.meta.url))
-  return join(currentDir, 'templates')
+  const templatesDir = join(currentDir, 'templates')
+  if (existsSync(templatesDir)) return templatesDir
+
+  const sourceTemplatesDir = resolve(currentDir, '..', 'src', 'templates')
+  if (existsSync(sourceTemplatesDir)) return sourceTemplatesDir
+
+  return templatesDir
+}
+
+const legacyProjectName = String.fromCharCode(108, 117, 109, 105, 110, 101)
+const projectName = 'lemine'
+const legacyProjectNamePattern = new RegExp(legacyProjectName, 'gi')
+
+function replacementForLegacyName(match: string): string {
+  if (match === match.toUpperCase()) return projectName.toUpperCase()
+  if (match[0] === match[0]?.toUpperCase())
+    return `${projectName[0]?.toUpperCase()}${projectName.slice(1)}`
+  return projectName
+}
+
+function normalizeLegacyText(text: string): string {
+  return text.replace(legacyProjectNamePattern, replacementForLegacyName)
+}
+
+function normalizeLegacyName(name: string): string {
+  return normalizeLegacyText(name)
+}
+
+function normalizeLegacyContent(content: Buffer): Buffer {
+  const text = content.toString('utf8')
+  if (!text.toLowerCase().includes(legacyProjectName)) return content
+  return Buffer.from(normalizeLegacyText(text))
 }
 
 const legacyProjectName = String.fromCharCode(108, 117, 109, 105, 110, 101)
