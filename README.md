@@ -21,7 +21,7 @@ apps/
 
 ## Running the CLI locally
 
-The `lemine` binary is provided by the `@leminejs/cli` package, but it is not automatically installed as a global shell command when you clone this monorepo. If your shell prints `lemine: command not found`, build the CLI and run it through pnpm:
+The `lemine` binary is provided by the `@leminejs/cli` package, but it is not automatically installed as a global shell command when you clone this monorepo. If your shell prints `lemine: command not found`, build the CLI and run it through pnpm from the repository root:
 
 ```sh
 pnpm --filter @leminejs/cli build
@@ -40,7 +40,7 @@ pnpm link --global
 lemine --help
 ```
 
-If you do not want to configure pnpm global binaries, keep using `pnpm lemine ...` from the repository root instead of the bare `lemine` command.
+`pnpm lemine ...` is a workspace script, so it only works from this repository (or one of its workspace directories). If you do not want to configure pnpm global binaries, keep using `pnpm lemine ...` from the repository root instead of the bare `lemine` command.
 
 ## Scripts
 
