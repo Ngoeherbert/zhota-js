@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, stat } from 'node:fs/promises'
+import { mkdtemp, readFile, readdir, rm, stat } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -7,6 +7,20 @@ import { create } from '../src/commands/create'
 import { scaffold } from '../src/scaffold'
 
 const tempDirs: string[] = []
+
+const legacyProjectName = String.fromCharCode(108, 117, 109, 105, 110, 101)
+
+async function collectProjectFiles(dir: string): Promise<string[]> {
+  const entries = await readdir(dir, { withFileTypes: true })
+  const paths = await Promise.all(
+    entries.map(async (entry) => {
+      const path = join(dir, entry.name)
+      if (entry.isDirectory()) return collectProjectFiles(path)
+      return [path]
+    }),
+  )
+  return paths.flat()
+}
 
 async function tempRoot(): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'lemine-cli-'))
@@ -77,14 +91,25 @@ describe('create scaffold', () => {
 
     await expect(stat(join(cwd, 'test', 'lemine.config.js'))).resolves.toBeTruthy()
     await expect(stat(join(cwd, 'test', 'lemine-env.d.ts'))).resolves.toBeTruthy()
-    expect(existsSync(join(cwd, 'test', 'lumine.config.js'))).toBe(false)
-    expect(existsSync(join(cwd, 'test', 'lumine-env.d.ts'))).toBe(false)
-
     const pkg = JSON.parse(await readFile(join(cwd, 'test', 'package.json'), 'utf8')) as {
       dependencies?: Record<string, string>
+      devDependencies?: Record<string, string>
     }
     expect(pkg.dependencies).toHaveProperty('@leminejs/router', 'latest')
     expect(pkg.dependencies).toHaveProperty('@leminejs/image', 'latest')
+    expect(pkg.dependencies).not.toHaveProperty('@leminejs/cli')
+    expect(pkg.devDependencies).not.toHaveProperty('@leminejs/cli')
+    expect(pkg.devDependencies).not.toHaveProperty('@leminejs/vite-plugin')
+
+    const projectFiles = await collectProjectFiles(join(cwd, 'test'))
+    expect(projectFiles.some((file) => file.toLowerCase().includes(legacyProjectName))).toBe(false)
+    await Promise.all(
+      projectFiles.map(async (file) => {
+        await expect(readFile(file, 'utf8')).resolves.not.toMatch(
+          new RegExp(legacyProjectName, 'i'),
+        )
+      }),
+    )
   })
 
   it('saas template includes middleware.ts', async () => {
@@ -122,5 +147,31 @@ describe('create scaffold', () => {
 
     await expect(stat(join(cwd, 'test', 'app', 'page.jsx'))).resolves.toBeTruthy()
     expect(existsSync(join(cwd, 'test', 'app', 'page.tsx'))).toBe(false)
+  })
+
+  it('CLI package avoids workspace-only runtime dependencies for generated app installs', async () => {
+    const pkg = JSON.parse(await readFile(join(process.cwd(), 'package.json'), 'utf8')) as {
+      dependencies?: Record<string, string>
+    }
+
+    expect(pkg.dependencies).not.toHaveProperty('@leminejs/server')
+    expect(pkg.dependencies).not.toHaveProperty('@leminejs/compiler')
+  })
+
+  it('skips dependency installation by default and prints install next step', async () => {
+    const cwd = await tempRoot()
+    const previousCwd = process.cwd()
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+
+    try {
+      process.chdir(cwd)
+      await create(['test', '--template', 'blank', '--lang', 'ts'])
+    } finally {
+      process.chdir(previousCwd)
+    }
+
+    await expect(stat(join(cwd, 'test', 'package.json'))).resolves.toBeTruthy()
+    expect(existsSync(join(cwd, 'test', 'node_modules'))).toBe(false)
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('pnpm install'))
   })
 })

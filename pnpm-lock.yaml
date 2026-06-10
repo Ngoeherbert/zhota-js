@@ -65,30 +65,11 @@ importers:
         specifier: workspace:^
         version: link:../../packages/vite-plugin
 
-  my-app:
-    dependencies:
-      '@leminejs/core':
-        specifier: workspace:^
-        version: link:../packages/core
-      '@leminejs/widgets':
-        specifier: workspace:^
-        version: link:../packages/widgets
-    devDependencies:
-      vite:
-        specifier: ^6.4.2
-        version: 6.4.2(@types/node@22.19.19)
-
   packages/cli:
     dependencies:
       '@clack/prompts':
         specifier: ^0.11.0
         version: 0.11.0
-      '@leminejs/compiler':
-        specifier: workspace:^
-        version: link:../compiler
-      '@leminejs/server':
-        specifier: workspace:^
-        version: link:../server
 
   packages/compiler: {}
 

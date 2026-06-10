@@ -5,6 +5,7 @@ Created with `lemine create`.
 ## Getting Started
 
 ```bash
+pnpm install
 lemine dev
 ```
 

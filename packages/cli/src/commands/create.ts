@@ -85,7 +85,7 @@ function parseOptions(args: string[]): CreateOptions {
   return {
     template,
     language,
-    install: !args.includes('--no-install'),
+    install: args.includes('--install') && !args.includes('--no-install'),
   }
 }
 
@@ -135,8 +135,17 @@ async function promptForMissingOptions(options: CreateOptions): Promise<Resolved
   }
 }
 
-export function installDeps(projectName: string): void {
-  execSync('pnpm install', { cwd: resolve(process.cwd(), projectName), stdio: 'inherit' })
+export function installDeps(projectDir: string): void {
+  execSync('pnpm install --prefer-offline', { cwd: projectDir, stdio: 'inherit' })
+}
+
+function nextSteps(target: string, installed: boolean): string {
+  const installStep = installed
+    ? ''
+    : `
+  pnpm install`
+  return `cd ${target}${installStep}
+  lemine dev`
 }
 
 export async function create(argv: string[]): Promise<void> {
@@ -158,9 +167,9 @@ export async function create(argv: string[]): Promise<void> {
       language: resolved.language,
       template: resolved.template,
     })
-    if (resolved.install) installDeps(target)
+    if (resolved.install) installDeps(projectDir)
     console.log(
-      `✓ Done! Your project is ready.\n\n  cd ${target}\n  lemine dev\n\nDocumentation: https://leminejs.dev/docs`,
+      `✓ Done! Your project is ready.\n\n  ${nextSteps(target, resolved.install)}\n\nDocumentation: https://leminejs.dev/docs`,
     )
     return
   }
@@ -178,11 +187,11 @@ export async function create(argv: string[]): Promise<void> {
 
   if (resolved.install) {
     spinner.start('Installing dependencies...')
-    installDeps(target)
+    installDeps(projectDir)
     spinner.stop('Dependencies installed!')
   }
 
   p.outro(
-    `Done! Your project is ready.\n\n  cd ${target}\n  lemine dev\n\nDocumentation: https://leminejs.dev/docs`,
+    `Done! Your project is ready.\n\n  ${nextSteps(target, resolved.install)}\n\nDocumentation: https://leminejs.dev/docs`,
   )
 }
