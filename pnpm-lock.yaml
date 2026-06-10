@@ -70,12 +70,6 @@ importers:
       '@clack/prompts':
         specifier: ^0.11.0
         version: 0.11.0
-      '@leminejs/compiler':
-        specifier: workspace:^
-        version: link:../compiler
-      '@leminejs/server':
-        specifier: workspace:^
-        version: link:../server
 
   packages/compiler: {}
 

@@ -44,6 +44,15 @@ lemine --help
 
 `pnpm lemine ...` is a workspace script, so it only works from this repository (or one of its workspace directories). If you do not want to configure pnpm global binaries, keep using `pnpm lemine ...` from the repository root instead of the bare `lemine` command.
 
+If a generated app previously failed with `ERR_PNPM_WORKSPACE_PKG_NOT_FOUND` while installing `@leminejs/cli`, rebuild and relink the CLI from this checkout so the global link uses the updated package metadata:
+
+```sh
+cd /path/to/zhota-js
+pnpm --filter @leminejs/cli build
+cd packages/cli
+pnpm link --global
+```
+
 ## Scripts
 
 - `pnpm build` — build all packages in dependency order with Turborepo.

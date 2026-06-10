@@ -146,6 +146,15 @@ describe('create scaffold', () => {
     expect(existsSync(join(cwd, 'test', 'app', 'page.tsx'))).toBe(false)
   })
 
+  it('CLI package avoids workspace-only runtime dependencies for generated app installs', async () => {
+    const pkg = JSON.parse(await readFile(join(process.cwd(), 'package.json'), 'utf8')) as {
+      dependencies?: Record<string, string>
+    }
+
+    expect(pkg.dependencies).not.toHaveProperty('@leminejs/server')
+    expect(pkg.dependencies).not.toHaveProperty('@leminejs/compiler')
+  })
+
   it('skips dependency installation by default and prints install next step', async () => {
     const cwd = await tempRoot()
     const previousCwd = process.cwd()
